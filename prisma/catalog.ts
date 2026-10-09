@@ -1,0 +1,687 @@
+/**
+ * Catálogo del Instrumento de Diagnóstico Organizacional LinkTIC.
+ * Transcrito de "Diagnóstico Organizacional.pdf" vía Contexto.md §3.3.
+ * Los textos de `label` e `intro` son literales del instrumento.
+ */
+
+export const GLOBAL_AREA_CODE = '__GLOBAL__';
+
+type QuestionType = 'SINGLE' | 'MULTI' | 'SCALE_0_10' | 'TEXT' | 'MATRIX_AREA';
+type OptionSource = 'STATIC' | 'AREAS' | 'PROCESOS';
+
+export interface OptionSeed {
+  value: string;
+  label: string;
+  allowsText?: boolean;
+  exclusive?: boolean;
+}
+
+export interface QuestionSeed {
+  code: string;
+  componentId: number;
+  label: string;
+  helpText?: string;
+  /** Qué significa el 0 en esta escala. Solo SCALE_0_10 y MATRIX_AREA. */
+  scaleMinLabel?: string;
+  /** Qué significa el 10 en esta escala. Solo SCALE_0_10 y MATRIX_AREA. */
+  scaleMaxLabel?: string;
+  type: QuestionType;
+  required?: boolean;
+  minSelect?: number;
+  maxSelect?: number;
+  perArea?: boolean;
+  optionSource?: OptionSource;
+  maxLength?: number;
+  options?: OptionSeed[];
+}
+
+// ============ ORGANIGRAMA: GESTIONES Y SUBPROCESOS ============
+// La distribución que LinkTIC definió el 5-oct-2026, que reemplaza a la del 14-sep-2026.
+// Una gestión agrupa subprocesos; el subproceso es lo que el encuestado selecciona. Las
+// gestiones son además el catálogo de las preguntas que el PDF marca como "(Lista)" de
+// procesos.
+//
+// Se declara como árbol para que leerlo sea leer el organigrama. Los nombres son los del
+// documento de LinkTIC con dos ajustes: mayúscula solo inicial, como el resto del
+// instrumento, y las erratas corregidas ("Bussiness", "Estrátegia", "I--nfraestrucutra").
+const ORGANIGRAMA: {
+  code: string;
+  name: string;
+  subprocesos: [code: string, name: string][];
+}[] = [
+  {
+    code: 'TALENTO_HUMANO',
+    name: 'Talento humano',
+    subprocesos: [
+      ['ATRACCION_TALENTO', 'Atracción de talento'],
+      ['PEOPLE_ANALYTICS', 'People analytics'],
+      ['APRENDIZAJE_DESARROLLO', 'Aprendizaje y desarrollo'],
+      ['COMPENSACION_BENEFICIOS', 'Compensación y beneficios'],
+      ['ADMINISTRACION_PERSONAL', 'Administración de personal'],
+      ['BIENESTAR_CULTURA', 'Bienestar y cultura'],
+      ['SST', 'Seguridad y salud en el trabajo'],
+      ['RELACIONES_LABORALES', 'Relaciones laborales'],
+      ['BUSINESS_PARTNER', 'Business partner'],
+    ],
+  },
+  {
+    code: 'SOSTENIBILIDAD_REPUTACION',
+    name: 'Sostenibilidad y reputación corporativa',
+    subprocesos: [
+      ['RELACIONES_CORPORATIVAS', 'Relaciones corporativas'],
+      ['COMUNICACION_INTERNA', 'Comunicación interna'],
+      [
+        'SOSTENIBILIDAD_RSE',
+        'Sostenibilidad y responsabilidad social empresarial',
+      ],
+    ],
+  },
+  {
+    code: 'COMERCIAL',
+    name: 'Comercial',
+    subprocesos: [['COMERCIAL', 'Comercial']],
+  },
+  {
+    code: 'LA_FABRICA',
+    name: 'La Fábrica',
+    subprocesos: [
+      ['GOBIERNO_FABRICA', 'Gobierno de fábrica'],
+      ['DATOS', 'Datos'],
+      ['ARQUITECTURA_SOFTWARE', 'Arquitectura de software'],
+      ['DESARROLLO_SOFTWARE', 'Desarrollo de software'],
+      ['INFRAESTRUCTURA_FABRICA', 'Infraestructura'],
+      ['QA', 'QA'],
+    ],
+  },
+  {
+    code: 'MARKETING',
+    name: 'Marketing',
+    subprocesos: [
+      ['DISENO_GRAFICO', 'Diseño gráfico'],
+      [
+        'ESTRATEGIA_MARKETING_PROYECTOS',
+        'Estrategia de marketing para proyectos',
+      ],
+      ['CONTENT_MARKETING', 'Content marketing'],
+      ['DISENO_UX_UI', 'Diseño UX/UI y producto digital'],
+      ['AUTOMATIZACION_BI', 'Automatización y BI'],
+      ['FORMACION', 'Formación'],
+    ],
+  },
+  {
+    code: 'TECNOLOGIA',
+    name: 'Tecnología',
+    subprocesos: [
+      ['SOPORTE', 'Soporte'],
+      ['INFRAESTRUCTURA_ON_PREMISE', 'Infraestructura on-premise'],
+    ],
+  },
+  {
+    code: 'MEJORAMIENTO_CONTINUO',
+    name: 'Mejoramiento continuo',
+    subprocesos: [['CALIDAD', 'Calidad']],
+  },
+  {
+    code: 'ADMINISTRATIVO_COMPRAS',
+    name: 'Administrativo y compras',
+    subprocesos: [
+      ['COMPRAS', 'Compras'],
+      ['ADMINISTRATIVO', 'Administrativo'],
+      ['TESORERIA', 'Tesorería'],
+    ],
+  },
+  {
+    code: 'CONTABLE_TRIBUTARIA',
+    name: 'Contable y tributaria',
+    subprocesos: [
+      ['CONTABLE', 'Contable'],
+      ['NOMINA', 'Nómina'],
+    ],
+  },
+  {
+    code: 'FINANCIERA',
+    name: 'Financiera',
+    subprocesos: [['FINANCIERA', 'Financiera']],
+  },
+  {
+    code: 'JURIDICA',
+    name: 'Jurídica',
+    subprocesos: [
+      ['CONTRATACION_PUBLICA', 'Contratación pública'],
+      ['LEGAL_PROYECTOS', 'Legal de proyectos'],
+      ['ASUNTOS_CORPORATIVOS_COMPLIANCE', 'Asuntos corporativos y compliance'],
+      ['ASUNTOS_ESTRATEGICOS', 'Asuntos estratégicos'],
+    ],
+  },
+  {
+    code: 'CIBERSEGURIDAD',
+    name: 'Ciberseguridad y seguridad de la información',
+    subprocesos: [
+      ['SEGURIDAD_INFORMACION', 'Seguridad de la información'],
+      ['SEGURIDAD_OFENSIVA', 'Seguridad ofensiva'],
+      ['SOC', 'SOC'],
+    ],
+  },
+  {
+    code: 'PREVENTA',
+    name: 'Preventa',
+    subprocesos: [['PREVENTA', 'Preventa']],
+  },
+  {
+    code: 'PROYECTOS',
+    name: 'Proyectos',
+    subprocesos: [
+      ['REQUERIMIENTOS', 'Requerimientos'],
+      ['MESA_AYUDA', 'Mesa de ayuda'],
+      ['ASEGURAMIENTO_PROYECTOS', 'Aseguramiento de proyectos'],
+    ],
+  },
+  {
+    code: 'COMUNICACIONES',
+    name: 'Comunicaciones',
+    subprocesos: [
+      ['ESTRATEGIA_DIGITAL', 'Estrategia digital de LinkTIC'],
+      ['VOZ_COMPARTIDA', 'Voz compartida'],
+      ['GOBIERNO_COMPONENTE_POLITICO', 'Gobierno y componente político'],
+      ['REALIZACION_AUDIOVISUAL', 'Realización audiovisual'],
+    ],
+  },
+  {
+    code: 'PLANEACION_ESTRATEGICA',
+    name: 'Planeación estratégica',
+    subprocesos: [
+      ['GESTION_SERVICIOS', 'Gestión de servicios'],
+      ['PMO', 'PMO'],
+      ['AGILE', 'Agile'],
+      ['GLOBAL_CAPACITY', 'Global capacity'],
+    ],
+  },
+];
+
+export const PROCESOS = ORGANIGRAMA.map(({ code, name }, index) => ({
+  code,
+  name,
+  sortOrder: index + 1,
+}));
+
+// ============ ÁREAS (subprocesos) ============
+// `sortOrder` es una sola secuencia global para que el catálogo salga ya agrupado por
+// gestión sin que el front tenga que reordenar.
+export const AREAS = ORGANIGRAMA.flatMap(({ code: procesoCode, subprocesos }) =>
+  subprocesos.map(([code, name]) => ({ code, name, procesoCode })),
+).map((area, index) => ({ ...area, sortOrder: index + 1 }));
+
+// Centinela para respuestas globales (no por área). Nunca se muestra al encuestado.
+export const SENTINEL_AREA = {
+  code: GLOBAL_AREA_CODE,
+  name: '(Global)',
+  isEvaluable: false,
+  active: false,
+  sortOrder: 999,
+};
+
+// ============ COMPONENTES ============
+export const COMPONENTS = [
+  {
+    id: 1,
+    code: 'c1_relacionamiento',
+    title: 'Caracterización del relacionamiento',
+    intro:
+      'Este componente permitirá construir posteriormente el mapa de relacionamiento organizacional.',
+  },
+  {
+    id: 2,
+    code: 'c2_red_colaboracion',
+    title: 'Red de colaboración',
+    intro:
+      'Comprender cómo funciona LinkTIC, permitirá fortalecer una red más colaborativa entre procesos.',
+  },
+  {
+    id: 3,
+    code: 'c3_comunicacion',
+    title: 'Comunicación organizacional',
+    intro:
+      'Evaluar la trazabilidad, claridad y oportunidad de la información dentro de la organización nos orienta sobre cómo potabilizar nuestros lenguajes y comunicación interna, consolidando una narrativa de alto valor.',
+  },
+  {
+    id: 4,
+    code: 'c4_servicio_interno',
+    title: 'Servicio interno',
+    intro:
+      'Este componente permite identificar qué tan eficientes somos en la gestión interna y en la atención de solicitudes entre áreas.',
+  },
+  {
+    id: 5,
+    code: 'c5_agilidad',
+    title: 'Agilidad organizacional',
+    intro:
+      'Como método de trabajo es importante saber cómo el equipo ha consolidado su capacidad de respuesta frente a solicitudes internas y necesidades de gestión.',
+  },
+  {
+    id: 6,
+    code: 'c6_integracion',
+    title: 'Integración de procesos',
+    intro:
+      'Este capítulo brinda una orientación frente a la claridad de roles, responsabilidades y coordinación entre procesos.',
+  },
+  {
+    id: 7,
+    code: 'c7_cultura',
+    title: 'Cultura colaborativa',
+    intro:
+      'Como compañía qué tipo de prácticas estamos construyendo en pro del trabajo conjunto, el aprendizaje compartido y la construcción de soluciones entre áreas.',
+  },
+  {
+    id: 8,
+    code: 'c8_innovacion',
+    title: 'Innovación organizacional',
+    intro:
+      'Este componente permite identificar la disposición para innovar, la apertura al cambio y la capacidad de implementar mejoras colaborativas.',
+  },
+  {
+    id: 9,
+    code: 'c9_experiencia',
+    title: 'Experiencia de servicio interno',
+    intro:
+      'Este componente está establecido para medir la experiencia de servicio entre áreas mediante el NPS interno.',
+  },
+  {
+    id: 10,
+    code: 'c10_transformacion',
+    title: 'Oportunidades de transformación',
+    intro:
+      'Como elemento que permite nutrir otras acciones que se vienen desarrollando al interior de la empresa, este ítem permite identificar barreras, oportunidades y prioridades de mejora para fortalecer el trabajo entre áreas.',
+  },
+];
+
+/**
+ * Anclas de una escala 0-10: [lo que significa el 0, lo que significa el 10].
+ *
+ * El PDF usa "muy deficiente / excelente" para todo, y eso no se lee bien en la mitad de
+ * los ítems: "Cumplen los compromisos — excelente" obliga a traducir una frecuencia a una
+ * nota. Cada pregunta nombra su propio tema en las anclas ("Comunicación deficiente",
+ * "Siempre cumplen"), y el 10 es siempre el polo favorable, que es lo que asumen los
+ * índices. Van cortas porque se pintan a los extremos de la regla, también en móvil.
+ * Reemplazan al antiguo texto de ayuda "0 significa… y 10 significa…": decían lo mismo dos
+ * veces en cada pregunta.
+ */
+type Anchors = readonly [min: string, max: string];
+
+const anchored = ([scaleMinLabel, scaleMaxLabel]: Anchors) => ({
+  scaleMinLabel,
+  scaleMaxLabel,
+});
+
+/** Genera los ítems de escala 0-10 globales (C3 a C8). */
+const scale = (
+  code: string,
+  componentId: number,
+  label: string,
+  anchors: Anchors,
+): QuestionSeed => ({
+  code,
+  componentId,
+  label,
+  type: 'SCALE_0_10',
+  ...anchored(anchors),
+});
+
+// ============ PREGUNTAS ============
+export const QUESTIONS: QuestionSeed[] = [
+  // --- Componente 1 ---
+  // El área propia ya no se pregunta aquí: se pide en la identificación, antes de
+  // empezar, porque condiciona todo lo que sigue (no se puede evaluar la propia área).
+  {
+    code: 'c1_areas_interaccion',
+    componentId: 1,
+    label: '¿Con cuáles áreas interactúa de manera frecuente?',
+    helpText:
+      'Seleccione máximo cinco áreas. Están agrupadas por gestión; marque los subprocesos, no la gestión completa. No incluya su propia área.',
+    type: 'MULTI',
+    minSelect: 1,
+    maxSelect: 5,
+    optionSource: 'AREAS',
+  },
+  {
+    code: 'c1_area_principal',
+    componentId: 1,
+    label: '¿Con cuál de esas áreas se relaciona más?',
+    helpText:
+      'Marque una sola, entre las que acaba de seleccionar. Es la que pesa como relación principal en el mapa.',
+    type: 'SINGLE',
+    optionSource: 'AREAS',
+  },
+  {
+    code: 'c1_frecuencia',
+    componentId: 1,
+    label: 'Frecuencia de interacción',
+    helpText: 'Marque una sola opción.',
+    type: 'SINGLE',
+    options: [
+      { value: 'DIARIA', label: 'Diaria' },
+      { value: 'VARIAS_SEMANA', label: 'Varias veces por semana' },
+      { value: 'SEMANAL', label: 'Semanal' },
+      { value: 'MENSUAL', label: 'Mensual' },
+      { value: 'ESPORADICA', label: 'Esporádica' },
+    ],
+  },
+  {
+    code: 'c1_tipo_interaccion',
+    componentId: 1,
+    label: 'Tipo de interacción predominante',
+    helpText: 'Marque las opciones que correspondan.',
+    type: 'MULTI',
+    minSelect: 1,
+    options: [
+      { value: 'OPERATIVA', label: 'Operativa' },
+      { value: 'TACTICA', label: 'Táctica' },
+      { value: 'ESTRATEGICA', label: 'Estratégica' },
+      { value: 'COMERCIAL', label: 'Comercial' },
+      { value: 'SOPORTE', label: 'Soporte' },
+    ],
+  },
+
+  // --- Componente 2 (por área evaluada) ---
+  {
+    code: 'c2_facilidad',
+    componentId: 2,
+    label: 'Facilidad para trabajar',
+    type: 'MATRIX_AREA',
+    perArea: true,
+    ...anchored(['Muy difícil trabajar juntos', 'Muy fácil trabajar juntos']),
+  },
+  {
+    code: 'c2_comunicacion',
+    componentId: 2,
+    label: 'Comunicación',
+    type: 'MATRIX_AREA',
+    perArea: true,
+    ...anchored(['Comunicación deficiente', 'Comunicación excelente']),
+  },
+  {
+    code: 'c2_confianza',
+    componentId: 2,
+    label: 'Confianza',
+    type: 'MATRIX_AREA',
+    perArea: true,
+    ...anchored(['Ninguna confianza', 'Confianza total']),
+  },
+  {
+    code: 'c2_cumplimiento',
+    componentId: 2,
+    label: 'Cumplimiento',
+    type: 'MATRIX_AREA',
+    perArea: true,
+    ...anchored(['Nunca cumplen', 'Siempre cumplen']),
+  },
+  {
+    code: 'c2_valor',
+    componentId: 2,
+    label: 'Generación de valor',
+    type: 'MATRIX_AREA',
+    perArea: true,
+    ...anchored(['No aporta valor', 'Aporta mucho valor']),
+  },
+
+  // --- Componente 3 ---
+  scale('c3_oportunidad', 3, 'La información llega oportunamente', [
+    'Nunca llega a tiempo',
+    'Siempre llega a tiempo',
+  ]),
+  scale('c3_claridad', 3, 'La comunicación es clara', [
+    'Comunicación confusa',
+    'Comunicación muy clara',
+  ]),
+  scale('c3_comprension', 3, 'Comprendemos fácilmente los requerimientos', [
+    'Cuesta mucho entenderlos',
+    'Se entienden fácilmente',
+  ]),
+  scale('c3_canales', 3, 'Los canales funcionan adecuadamente', [
+    'Funcionan muy mal',
+    'Funcionan muy bien',
+  ]),
+  scale('c3_reproceso', 3, 'Se evita el reproceso por mala comunicación', [
+    'Siempre hay reproceso',
+    'Nunca hay reproceso',
+  ]),
+
+  // --- Componente 4 ---
+  scale('c4_disposicion', 4, 'Existe disposición para ayudar', [
+    'Ninguna disposición',
+    'Total disposición',
+  ]),
+  scale('c4_comprension', 4, 'Comprenden nuestras necesidades', [
+    'No las comprenden',
+    'Las comprenden por completo',
+  ]),
+  scale('c4_seguimiento', 4, 'Dan seguimiento a las solicitudes', [
+    'Nunca dan seguimiento',
+    'Siempre dan seguimiento',
+  ]),
+  scale('c4_compromisos', 4, 'Cumplen los compromisos', [
+    'Nunca cumplen',
+    'Siempre cumplen',
+  ]),
+  scale('c4_valor', 4, 'Agregan valor al proceso', [
+    'No agregan valor',
+    'Agregan mucho valor',
+  ]),
+
+  // --- Componente 5 ---
+  // El 5-oct-2026 LinkTIC retiró del instrumento la pregunta del ANS (c5_tiempo_respuesta)
+  // y la escala "Capacidad de respuesta" (c5_capacidad_respuesta). El componente queda en
+  // tres escalas y el IAG pasa a ser su promedio × 10.
+  scale('c5_cumplimiento_tiempos', 5, 'Cumplimiento de tiempos', [
+    'Nunca se cumplen',
+    'Siempre se cumplen',
+  ]),
+  scale('c5_facilidad_resolver', 5, 'Facilidad para resolver solicitudes', [
+    'Muy difícil resolverlas',
+    'Muy fácil resolverlas',
+  ]),
+  scale('c5_seguimiento', 5, 'Seguimiento', [
+    'Sin seguimiento',
+    'Seguimiento constante',
+  ]),
+
+  // --- Componente 6 ---
+  scale('c6_impacto', 6, 'Conozco cómo mi proceso impacta otros procesos', [
+    'No lo conozco',
+    'Lo conozco a fondo',
+  ]),
+  scale('c6_roles', 6, 'Existe claridad en los roles', [
+    'Roles nada claros',
+    'Roles totalmente claros',
+  ]),
+  scale('c6_coordinacion', 6, 'Hay coordinación entre áreas', [
+    'Sin coordinación',
+    'Coordinación excelente',
+  ]),
+  scale('c6_reprocesos', 6, 'Se minimizan los reprocesos', [
+    'Reprocesos constantes',
+    'Reprocesos mínimos',
+  ]),
+  scale('c6_responsabilidades', 6, 'Las responsabilidades son claras', [
+    'Nada claras',
+    'Totalmente claras',
+  ]),
+
+  // --- Componente 7 ---
+  scale('c7_conocimiento', 7, 'Compartimos conocimiento', [
+    'Nunca lo compartimos',
+    'Siempre lo compartimos',
+  ]),
+  scale('c7_confianza', 7, 'Existe confianza', [
+    'Ninguna confianza',
+    'Confianza plena',
+  ]),
+  scale('c7_soluciones', 7, 'Buscamos soluciones conjuntamente', [
+    'Cada uno por su lado',
+    'Siempre en conjunto',
+  ]),
+  scale('c7_aprendizaje', 7, 'Hay apertura al aprendizaje', [
+    'Ninguna apertura',
+    'Apertura total',
+  ]),
+  scale('c7_objetivos', 7, 'Trabajamos por objetivos comunes', [
+    'Objetivos desalineados',
+    'Objetivos alineados',
+  ]),
+
+  // --- Componente 8 ---
+  {
+    code: 'c8_areas_iniciativas',
+    componentId: 8,
+    label:
+      'Seleccione las áreas con las que ha desarrollado iniciativas nuevas durante los últimos seis meses.',
+    // SUPUESTO: el PDF deja las opciones como "□ …" sin listarlas (Contexto.md §11.1).
+    type: 'MULTI',
+    required: false,
+    optionSource: 'AREAS',
+    options: [{ value: 'NINGUNA', label: 'Ninguna', exclusive: true }],
+  },
+  scale('c8_disposicion', 8, 'Disposición para innovar', [
+    'Ninguna disposición',
+    'Total disposición',
+  ]),
+  scale('c8_apertura', 8, 'Apertura al cambio', [
+    'Resistencia al cambio',
+    'Total apertura al cambio',
+  ]),
+  scale('c8_capacidad_mejoras', 8, 'Capacidad para implementar mejoras', [
+    'Capacidad muy baja',
+    'Capacidad muy alta',
+  ]),
+  scale('c8_aprendizaje', 8, 'Aprendizaje compartido', [
+    'Nunca se comparte',
+    'Siempre se comparte',
+  ]),
+
+  // --- Componente 9 (NPS por área evaluada) ---
+  // Las anclas son las del NPS estándar: cambiarlas rompe la comparación con cualquier
+  // otro NPS.
+  {
+    code: 'c9_nps',
+    componentId: 9,
+    label: '¿Qué tan probable es que recomiende trabajar con esta área?',
+    type: 'SCALE_0_10',
+    perArea: true,
+    ...anchored(['Nada probable', 'Totalmente probable']),
+  },
+  {
+    code: 'c9_motivos',
+    componentId: 9,
+    label: '¿Por qué dio esa calificación?',
+    helpText: 'Marque una o varias opciones.',
+    type: 'MULTI',
+    minSelect: 1,
+    options: [
+      { value: 'COMUNICACION', label: 'Comunicación' },
+      { value: 'SERVICIO', label: 'Servicio' },
+      { value: 'RAPIDEZ', label: 'Rapidez' },
+      { value: 'CONOCIMIENTO', label: 'Conocimiento' },
+      { value: 'ACTITUD', label: 'Actitud' },
+      { value: 'COMPROMISO', label: 'Compromiso' },
+      { value: 'OTRO', label: 'Otro', allowsText: true },
+    ],
+  },
+
+  // --- Componente 10 ---
+  {
+    code: 'c10_obstaculo',
+    componentId: 10,
+    label:
+      '¿Cuál considera que hoy es el mayor obstáculo para trabajar entre áreas?',
+    helpText: 'Marque una o varias opciones.',
+    type: 'MULTI',
+    minSelect: 1,
+    options: [
+      { value: 'COMUNICACION', label: 'Comunicación' },
+      { value: 'PROCESOS', label: 'Procesos' },
+      { value: 'TECNOLOGIA', label: 'Tecnología' },
+      { value: 'ROLES', label: 'Roles' },
+      { value: 'LIDERAZGO', label: 'Liderazgo' },
+      { value: 'PLANEACION', label: 'Planeación' },
+      { value: 'PRIORIDADES', label: 'Prioridades' },
+      { value: 'CULTURA', label: 'Cultura' },
+    ],
+  },
+  {
+    code: 'c10_proceso_reprocesos',
+    componentId: 10,
+    label: '¿Qué proceso genera más reprocesos?',
+    helpText: 'Marque la gestión, no el subproceso.',
+    type: 'SINGLE',
+    optionSource: 'PROCESOS',
+    options: [{ value: 'OTRO', label: 'Otro', allowsText: true }],
+  },
+  {
+    code: 'c10_area_mayor_valor',
+    componentId: 10,
+    label: '¿Qué área genera mayor valor para LinkTIC?',
+    type: 'SINGLE',
+    optionSource: 'AREAS',
+  },
+  {
+    code: 'c10_area_fortalecer',
+    componentId: 10,
+    label: '¿Qué área considera que necesita fortalecer su relacionamiento?',
+    type: 'SINGLE',
+    optionSource: 'AREAS',
+  },
+  {
+    code: 'c10_cambio_unico',
+    componentId: 10,
+    label:
+      'Si pudiera cambiar una sola cosa de LinkTIC para mejorar el trabajo entre áreas, ¿cuál sería?',
+    type: 'TEXT',
+    required: false,
+    maxLength: 1000,
+  },
+];
+
+// ============ PESOS DEL ÍNDICE COMPUESTO (IMC) ============
+// Deben sumar 1.000 — el back lo valida al leerlos (Contexto.md §4.4).
+export const INDICATOR_WEIGHTS = [
+  { indicatorCode: 'IREL', weight: 0.2 },
+  { indicatorCode: 'ICOM', weight: 0.15 },
+  { indicatorCode: 'ISI', weight: 0.15 },
+  { indicatorCode: 'IAG', weight: 0.15 },
+  { indicatorCode: 'IINT', weight: 0.15 },
+  { indicatorCode: 'ICOL', weight: 0.1 },
+  { indicatorCode: 'IINN', weight: 0.1 },
+];
+
+// ============ SEMAFORIZACIÓN ============
+// Rangos de Contexto.md §4.2. Los colores viven aquí y no en el front, para que el
+// admin pueda ajustarlos sin desplegar.
+export const INDICATOR_THRESHOLDS = [
+  {
+    label: 'Fortaleza',
+    minValue: 80,
+    maxValue: 100,
+    color: '#0F7B3F',
+    sortOrder: 1,
+  },
+  {
+    label: 'Aceptable',
+    minValue: 60,
+    maxValue: 79.99,
+    color: '#B58200',
+    sortOrder: 2,
+  },
+  {
+    label: 'En riesgo',
+    minValue: 40,
+    maxValue: 59.99,
+    color: '#C2570F',
+    sortOrder: 3,
+  },
+  {
+    label: 'Crítico',
+    minValue: 0,
+    maxValue: 39.99,
+    color: '#B3261E',
+    sortOrder: 4,
+  },
+];

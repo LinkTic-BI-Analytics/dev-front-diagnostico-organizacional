@@ -1,0 +1,76 @@
+/** Centinela de `answers.target_area` para respuestas globales (no evaluadas por área). */
+export const GLOBAL_AREA_CODE = '__GLOBAL__';
+
+/** Código de área/opción de texto libre. No agrega en la matriz de relacionamiento. */
+export const OTHER_AREA_CODE = 'OTRA';
+
+/**
+ * Niveles de cargo. Lista cerrada: se pide en la identificación junto con el área y se
+ * guarda como código, para que los cortes del panel no dependan de cómo lo escriba cada
+ * persona. Es la misma lista que el front recibe en `GET /survey/schema`.
+ */
+export const RESPONDENT_ROLES = [
+  { value: 'DIRECTOR', label: 'Director' },
+  { value: 'GERENTE', label: 'Gerente' },
+  { value: 'HEAD', label: 'Head' },
+  { value: 'COORDINADOR', label: 'Coordinador' },
+  { value: 'LIDER', label: 'Líder' },
+  { value: 'PROFESIONAL', label: 'Profesional' },
+  { value: 'ANALISTA', label: 'Analista' },
+] as const;
+
+export const RESPONDENT_ROLE_VALUES: string[] = RESPONDENT_ROLES.map(
+  (role) => role.value,
+);
+
+/** Etiqueta legible de un cargo. El código sin traducir no se muestra nunca. */
+export const RESPONDENT_ROLE_LABELS: Record<string, string> =
+  Object.fromEntries(RESPONDENT_ROLES.map((role) => [role.value, role.label]));
+
+/**
+ * Los cargos agrupados en tres niveles de la jerarquía.
+ *
+ * Existen por la cohorte mínima: en una organización de este tamaño hay pocos directores y
+ * pocos heads, así que la fila de cada cargo suele quedar suprimida y la lectura "cómo se ve
+ * la organización desde arriba y desde abajo" desaparecería entera. Sumados en su nivel
+ * alcanzan el umbral sin exponer a nadie.
+ */
+export const ROLE_GROUPS = [
+  {
+    value: 'DIRECCION',
+    label: 'Dirección',
+    roles: ['DIRECTOR', 'GERENTE', 'HEAD'],
+  },
+  {
+    value: 'MANDOS_MEDIOS',
+    label: 'Mandos medios',
+    roles: ['COORDINADOR', 'LIDER'],
+  },
+  { value: 'EQUIPOS', label: 'Equipos', roles: ['PROFESIONAL', 'ANALISTA'] },
+] as const;
+
+/** Longitud máxima del texto de una opción "Otra". */
+export const OTHER_TEXT_MAX_LENGTH = 200;
+
+/** Escala del instrumento: enteros de 0 a 10 inclusive. */
+export const SCALE_MIN = 0;
+export const SCALE_MAX = 10;
+
+/** Umbrales del NPS: promotores 9-10, pasivos 7-8, detractores 0-6. */
+export const NPS_PROMOTER_MIN = 9;
+export const NPS_PASSIVE_MIN = 7;
+
+/** Scores de frecuencia de interacción (C1.3), normalizados a 0-100. */
+export const FREQUENCY_SCORES: Record<string, number> = {
+  DIARIA: 100,
+  VARIAS_SEMANA: 80,
+  SEMANAL: 60,
+  MENSUAL: 40,
+  ESPORADICA: 20,
+};
+
+/** Número de tipos de interacción posibles (C1.4), denominador del score de diversidad. */
+export const INTERACTION_TYPE_COUNT = 5;
+
+/** Áreas con iniciativas conjuntas que se consideran "colaboración plena" en el IINN. */
+export const INNOVATION_PARTNER_TARGET = 3;

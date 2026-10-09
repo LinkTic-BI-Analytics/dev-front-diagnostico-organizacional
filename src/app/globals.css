@@ -1,0 +1,793 @@
+@import 'tailwindcss';
+
+/*
+ * ============ LÍNEA GRÁFICA ============
+ *
+ * El sistema sigue la línea gráfica aprobada por la organización para sus herramientas de
+ * análisis (la de «Prospectiva LinkTIC»): chrome navy con el degradado de marca, planos
+ * claros para el contenido, tarjetas blancas y Geist como tipografía de interfaz. Este
+ * panel va a convivir con otros sistemas de la casa y a cruzar datos con ellos, así que
+ * hablar el mismo idioma visual no es estética: es que quien salta de uno a otro no
+ * tenga que reaprender dónde está cada cosa.
+ *
+ * Es un sistema solo en claro, como el de referencia. El chrome oscuro (menú lateral y
+ * portadas) ya da el contraste que en otras interfaces da un tema oscuro, y el panel se
+ * proyecta e imprime: un único tema es lo que garantiza que lo que se ve es lo que sale.
+ *
+ * Los colores de semaforización de indicadores NO viven aquí: llegan de
+ * `indicator_thresholds` en la base de datos para que un admin pueda ajustarlos sin
+ * desplegar. Aquí solo está el chrome y la paleta de datos.
+ */
+:root {
+  color-scheme: light;
+
+  /* Marca: los valores de la línea gráfica de referencia, sin reinterpretar. */
+  --lk-navy-950: #06142b;
+  --lk-navy-900: #0a1f3d;
+  --lk-navy-800: #10264a;
+  --lk-blue: #0e8fd8;
+  --lk-blue-deep: #0a6cb1;
+  --lk-cyan: #29c3f4;
+  --lk-green: #23a844;
+  --lk-green-deep: #128c31;
+
+  --lk-degradado-marca: linear-gradient(90deg, #29c3f4 0%, #0d7fd1 45%, #23a844 100%);
+  --lk-degradado-marca-vertical: linear-gradient(180deg, #29c3f4 0%, #0d7fd1 45%, #23a844 100%);
+  --lk-fondo-portada:
+    radial-gradient(60% 80% at 85% 10%, #0e8fd859, transparent 60%),
+    radial-gradient(50% 60% at 10% 90%, #23a84440, transparent 60%),
+    linear-gradient(160deg, #06142b, #0a1f3d 60%, #10264a);
+  --lk-fondo-menu:
+    radial-gradient(140% 38% at 0% 0%, #0e8fd82e, transparent 70%),
+    radial-gradient(120% 30% at 100% 100%, #23a8441f, transparent 70%),
+    linear-gradient(180deg, #0a1f3d 0%, #06142b 100%);
+
+  /* Movimiento: pocas duraciones y tres curvas, para que todo se mueva igual. */
+  --lk-dur-micro: 0.12s;
+  --lk-dur-corta: 0.2s;
+  --lk-dur-media: 0.32s;
+  --lk-dur-larga: 0.55s;
+  --lk-dur-grafica: 0.8s;
+  --lk-ease-salida: cubic-bezier(0.22, 1, 0.36, 1);
+  --lk-ease-io: cubic-bezier(0.65, 0, 0.35, 1);
+  --lk-ease-rebote: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --lk-escalonado: 60ms;
+
+  /*
+   * Tokens semánticos. Contraste medido: `--foreground-muted` rinde 7,5:1 sobre blanco y
+   * 7,0:1 sobre el plano de página; `--foreground-subtle` rinde 4,8:1 sobre blanco pero
+   * solo 4,4:1 sobre el plano, así que es tinta de tarjeta, nunca de página.
+   */
+  --background: #f2f6fa;
+  --surface: #ffffff;
+  --surface-muted: #f1f5f9;
+  --surface-sunken: #f8fafc;
+  --border: #e2e8f0;
+  --border-strong: #cad5e2;
+  --foreground: #102433;
+  --foreground-muted: #45556c;
+  --foreground-subtle: #62748e;
+
+  /*
+   * El azul de marca (#0e8fd8) es un plano y un acento, no una tinta: sobre blanco no
+   * llega a 4,5:1. Lo interactivo usa su versión profunda, que rinde 5,5:1 sobre blanco y
+   * 5,5:1 con texto blanco encima.
+   */
+  --brand: var(--lk-blue-deep);
+  --brand-hover: #0a5f9e;
+  --brand-subtle: #e8f3fc;
+  --brand-accent: var(--lk-blue);
+  --focus: #0b76b3;
+  --focus-on-dark: var(--lk-cyan);
+  --danger: #b3261e;
+  --danger-subtle: #fdeceb;
+  --success: #006300;
+}
+
+/*
+ * ============ PALETA DE DATOS ============
+ *
+ * Es la misma paleta que usa el sistema de referencia, y está validada con el
+ * procedimiento de seis controles: el orden de los ocho tonos ES el mecanismo de
+ * seguridad para daltonismo, así que se asignan en secuencia y nunca se reciclan. Para
+ * marcas que pueden quedar lado a lado en cualquier orden (burbujas, dispersión) solo
+ * valen las tres primeras.
+ *
+ * Una sola serie va siempre en el tono 1. La rampa ordinal es para escalas con orden
+ * natural (frecuencia de interacción); la secuencial, para magnitud continua (mapa de calor);
+ * el par divergente, para magnitudes con dos polos (brecha, motivos del NPS).
+ */
+:root {
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+  --series-6: #008300;
+  --series-7: #4a3aa7;
+  --series-8: #e34948;
+
+  /* Secuencial azul, de «casi nada» a «mucho». */
+  --seq-100: #cde2fb;
+  --seq-200: #9ec5f4;
+  --seq-300: #6da7ec;
+  --seq-400: #3987e5;
+  --seq-500: #256abf;
+  --seq-600: #184f95;
+  --seq-700: #0d366b;
+
+  /* Ordinal: cinco pasos verificados (luminancia monótona, ΔL ≥ 0,06, extremo claro 2,1:1). */
+  --ramp-1: #86b6ef;
+  --ramp-2: #3987e5;
+  --ramp-3: #256abf;
+  --ramp-4: #184f95;
+  --ramp-5: #0d366b;
+
+  /* Divergente frío/cálido con el neutro de la interfaz en medio. ΔE 21,6 con protanopia. */
+  --diverge-pos: #2a78d6;
+  --diverge-neg: #e34948;
+  --diverge-mid: #eef1f5;
+
+  /*
+   * Likert divergente (afirmaciones por banda del semáforo): dos rojos para las bandas bajas
+   * y dos azules para las altas. Cada brazo pasa los controles ordinales; los extremos se
+   * separan ΔE 21,5 con protanopia. Los pasos claros quedan bajo 3:1, así que van siempre
+   * con rótulo y con vista de tabla.
+   */
+  --likert-1: #c63734;
+  --likert-2: #f0928f;
+  --likert-3: #86b6ef;
+  --likert-4: #256abf;
+
+  /* Mobiliario del gráfico: hairlines sólidas, un paso fuera de la superficie. */
+  --chart-grid: #e2e8f0;
+  --chart-axis: #cad5e2;
+  --chart-ink: #62748e;
+  --chart-benchmark: #102433;
+  --chart-empty: #e8edf3;
+}
+
+/*
+ * ============ TONO DE LAS LECTURAS DEL PANEL ============
+ *
+ * Cada conclusión se marca según lo que concluye. No son los colores del semáforo —esos
+ * llegan de la base y un admin los edita— sino el chrome que los acompaña, elegido para
+ * rendir como TINTA (todos ≥ 4,5:1 sobre blanco). Nunca van solos: cada lectura lleva
+ * además su icono y su palabra, porque las bandas del semáforo no se distinguen por color.
+ */
+:root {
+  --tone-good: #0f7b3f;
+  --tone-neutral: var(--brand);
+  --tone-warn: #a8480b;
+  --tone-bad: #b3261e;
+
+  --tone-good-subtle: #e8f5ed;
+  --tone-neutral-subtle: var(--brand-subtle);
+  --tone-warn-subtle: #fdf0e6;
+  --tone-bad-subtle: #fdeceb;
+}
+
+/*
+ * Relleno de las matrices: un velo del color de banda, no el color a plena carga. Dos
+ * docenas de bloques saturados se leen como ruido y aplastan el número, que es el dato.
+ * Verificado: la luminancia baja de forma monótona con la severidad y el texto rinde
+ * ≥ 5,1:1 en todos los pasos.
+ */
+:root {
+  --heat-1: 14%;
+  --heat-2: 26%;
+  --heat-3: 40%;
+  --heat-4: 50%;
+}
+
+/*
+ * ============ FASES DE LA ENCUESTA ============
+ *
+ * La encuesta se recorre en cuatro tramos y cada uno tiene su color: es la respuesta a
+ * «¿en qué parte voy?» sin obligar a leer el número de paso. Los componentes del wizard
+ * se pintan con `text-phase`, `bg-phase-subtle`, `border-phase`… y recolorean solos al
+ * cambiar de fase, sin pasar el color por props. Fuera de un `[data-phase]` los tokens
+ * valen lo mismo que la marca, que es lo que necesitan la bienvenida y la revisión.
+ *
+ * La TINTA lleva texto y planos rellenos (todas entre 5,5:1 y 6,9:1 sobre blanco); el
+ * ACENTO es solo gráfico —filetes y bordes— y nunca texto pequeño. El coral queda fuera:
+ * es el color del error.
+ */
+:root {
+  --phase-ink: var(--brand);
+  --phase-ink-hover: var(--brand-hover);
+  --phase-accent: var(--brand-accent);
+  --phase-subtle: var(--brand-subtle);
+  --phase-border: #b9dcf5;
+  --phase-on: #ffffff;
+}
+
+/* Fase 1 · Relacionamiento — el azul de la marca. */
+[data-phase='relacionamiento'] {
+  --phase-ink: #0a6cb1;
+  --phase-ink-hover: #0a5f9e;
+  --phase-accent: #0e8fd8;
+  --phase-subtle: #e8f3fc;
+  --phase-border: #b9dcf5;
+}
+
+/* Fase 2 · Operación — teal. */
+[data-phase='operacion'] {
+  --phase-ink: #0d6d5f;
+  --phase-ink-hover: #0a564b;
+  --phase-accent: #1eae98;
+  --phase-subtle: #e4f5f1;
+  --phase-border: #a9ddd3;
+}
+
+/* Fase 3 · Cultura — el verde de la marca, en su tinta profunda (#128c31 no llega a 4,5:1). */
+[data-phase='cultura'] {
+  --phase-ink: #12690a;
+  --phase-ink-hover: #0d5207;
+  --phase-accent: #23a844;
+  --phase-subtle: #eaf7ed;
+  --phase-border: #b5e3c0;
+}
+
+/* Fase 4 · Cierre — ámbar. */
+[data-phase='cierre'] {
+  --phase-ink: #8a5300;
+  --phase-ink-hover: #6e4200;
+  --phase-accent: #eda100;
+  --phase-subtle: #fff5e0;
+  --phase-border: #f0d49a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-border-subtle: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-foreground-subtle: var(--foreground-subtle);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-subtle: var(--brand-subtle);
+  --color-brand-accent: var(--brand-accent);
+  --color-focus: var(--focus);
+  --color-danger: var(--danger);
+  --color-danger-subtle: var(--danger-subtle);
+  --color-success: var(--success);
+
+  --color-navy-950: var(--lk-navy-950);
+  --color-navy-900: var(--lk-navy-900);
+  --color-navy-800: var(--lk-navy-800);
+  --color-lk-blue: var(--lk-blue);
+  --color-lk-cyan: var(--lk-cyan);
+  --color-lk-green: var(--lk-green);
+  --color-lk-green-deep: var(--lk-green-deep);
+
+  --color-series-1: var(--series-1);
+  --color-series-2: var(--series-2);
+  --color-series-3: var(--series-3);
+  --color-series-8: var(--series-8);
+  --color-seq-100: var(--seq-100);
+  --color-seq-200: var(--seq-200);
+  --color-seq-500: var(--seq-500);
+  --color-diverge-pos: var(--diverge-pos);
+  --color-diverge-neg: var(--diverge-neg);
+  --color-chart-grid: var(--chart-grid);
+  --color-chart-axis: var(--chart-axis);
+  --color-chart-ink: var(--chart-ink);
+
+  --color-phase: var(--phase-ink);
+  --color-phase-hover: var(--phase-ink-hover);
+  --color-phase-accent: var(--phase-accent);
+  --color-phase-subtle: var(--phase-subtle);
+  --color-phase-border: var(--phase-border);
+  --color-phase-on: var(--phase-on);
+
+  --color-tone-good: var(--tone-good);
+  --color-tone-neutral: var(--tone-neutral);
+  --color-tone-warn: var(--tone-warn);
+  --color-tone-bad: var(--tone-bad);
+  --color-tone-good-subtle: var(--tone-good-subtle);
+  --color-tone-neutral-subtle: var(--tone-neutral-subtle);
+  --color-tone-warn-subtle: var(--tone-warn-subtle);
+  --color-tone-bad-subtle: var(--tone-bad-subtle);
+
+  --font-sans: var(--font-geist-sans), system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/*
+ * Base en `@layer base` y no suelta: en Tailwind 4 los utilitarios viven en una capa, y
+ * una regla sin capa les gana siempre, sin importar la especificidad. Aquí dentro, un
+ * `font-medium` o un `focus-visible:outline-none` puestos en un elemento concreto mandan
+ * sobre lo que se fija para todos.
+ */
+@layer base {
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-geist-sans), system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+
+  /*
+   * Jerarquía tipográfica en el CSS y no en cada `className`: un <h1> nuevo nace con el
+   * peso y el interletrado de la línea gráfica sin que nadie lo recuerde.
+   */
+  h1 {
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+  }
+
+  h2,
+  h3,
+  h4 {
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  /* Foco visible en todo elemento interactivo; en el chrome oscuro, el cian de la marca. */
+  :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  .lk-sobre-oscuro :is(a, button, input, select, [tabindex]):focus-visible {
+    outline-color: var(--focus-on-dark);
+  }
+}
+
+/* ============ PIEZAS DE LA LÍNEA GRÁFICA ============ */
+
+@layer components {
+  /* La portada oscura: cabecera de las vistas que abren con un titular. */
+  .lk-portada {
+    background: var(--lk-fondo-portada);
+  }
+
+  /* Retícula de puntos, desvanecida hacia el borde para que no compita con el texto. */
+  .lk-reticula {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(#ffffff1a 1px, #0000 1.5px);
+    background-size: 24px 24px;
+    mask-image: radial-gradient(80% 70% at 70% 30%, #000 0%, #0000 75%);
+  }
+
+  /* Vidrio: las tarjetas de cifras sobre la portada. */
+  .lk-vidrio {
+    background: #ffffff0d;
+    box-shadow: inset 0 0 0 1px #ffffff1a;
+    backdrop-filter: blur(8px);
+  }
+
+  .lk-menu {
+    background: var(--lk-fondo-menu);
+  }
+
+  .lk-barra-superior {
+    background: linear-gradient(90deg, #06142b 0%, #0a1f3d 100%);
+    box-shadow: 0 1px #ffffff0f;
+  }
+
+  /* El filete superior de las tarjetas protagonistas. */
+  .lk-accent-bar {
+    background: var(--lk-degradado-marca);
+  }
+
+  /* El guion del antetítulo: un trazo corto con el degradado de la marca. */
+  .lk-kicker::before {
+    content: '';
+    display: inline-block;
+    inline-size: 24px;
+    block-size: 3px;
+    border-radius: 3px;
+    background: var(--lk-degradado-marca);
+    vertical-align: middle;
+    margin-inline-end: 12px;
+    translate: 0 -1px;
+  }
+
+  /* La superficie de las tarjetas del contenido. */
+  .lk-tarjeta {
+    background: var(--surface);
+    border-radius: 1rem;
+    box-shadow:
+      0 0 0 1px #0f172a12,
+      0 1px 2px #0f172a0a,
+      0 8px 24px -16px #0f172a26;
+  }
+
+  /* El botón principal: el degradado azul de la marca, nunca un plano liso. */
+  .lk-button {
+    background: linear-gradient(135deg, #0b76b3 0%, #0a5f9e 100%);
+    color: #fff;
+    transition:
+      filter 0.15s,
+      transform 0.15s,
+      box-shadow 0.2s;
+  }
+
+  .lk-button:hover:not(:disabled) {
+    filter: brightness(1.09);
+    transform: translateY(-1px);
+    box-shadow: 0 12px 28px -12px #0b76b3a6;
+  }
+
+  .lk-button:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  .lk-button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  /* La palabra destacada de un titular. */
+  .lk-text-gradient,
+  .lk-text-gradient-portada {
+    color: transparent;
+    background-clip: text;
+    background-size: 250% 100%;
+    animation: lk-gradient-pan 7s ease-in-out 2 alternate;
+  }
+
+  .lk-text-gradient {
+    background-image: linear-gradient(100deg, #0a6cb1 0%, #0e8fd8 35%, #128c31 75%, #0a6cb1 100%);
+  }
+
+  /* Sobre la portada el mismo énfasis se ilumina: el azul profundo se perdería en el navy. */
+  .lk-text-gradient-portada,
+  .lk-portada .lk-text-gradient {
+    background-image: linear-gradient(100deg, #29c3f4 0%, #0e8fd8 35%, #23a844 75%, #29c3f4 100%);
+  }
+
+  /* Los halos de la superficie pública: cian arriba a la izquierda, verde abajo. */
+  .lk-halos::before,
+  .lk-halos::after {
+    content: '';
+    position: fixed;
+    z-index: -1;
+    pointer-events: none;
+    border-radius: 9999px;
+    filter: blur(80px);
+    opacity: 0.55;
+  }
+
+  .lk-halos::before {
+    inset-block-start: -12rem;
+    inset-inline-start: -10rem;
+    inline-size: 34rem;
+    block-size: 34rem;
+    background: #9fdcf6;
+  }
+
+  .lk-halos::after {
+    inset-block-end: -14rem;
+    inset-inline-end: -10rem;
+    inline-size: 36rem;
+    block-size: 36rem;
+    background: #a9dfb5;
+  }
+
+  /* Pestañas: el subrayado con el degradado crece desde el centro al seleccionarse. */
+  .lk-pestana {
+    position: relative;
+  }
+
+  .lk-pestana::after {
+    content: '';
+    position: absolute;
+    inset-block-end: -1px;
+    inset-inline: 12px;
+    block-size: 3px;
+    border-radius: 3px;
+    background: var(--lk-degradado-marca);
+    transform: scaleX(0);
+    transition: transform var(--lk-dur-corta) var(--lk-ease-salida);
+  }
+
+  .lk-pestana[aria-selected='true']::after,
+  .lk-pestana[aria-current='page']::after {
+    transform: scaleX(1);
+  }
+
+  /* El punto de «en vivo»: un pulso lento, para que se note sin distraer. */
+  .lk-en-vivo {
+    position: relative;
+  }
+
+  .lk-en-vivo::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: inherit;
+    animation: lk-pulso 2s var(--lk-ease-salida) infinite;
+  }
+
+  /* Celda sin dato en una matriz: rayado tenue, que no se confunda con un valor bajo. */
+  .lk-graf-vacia {
+    background-image: repeating-linear-gradient(45deg, #7e8da3 0 1px, #0000 1px 4px);
+    box-shadow: inset 0 0 0 1px #c3ccd8;
+    opacity: 0.55;
+  }
+
+  .lk-formula {
+    color: var(--lk-navy-900);
+    font-family: var(--font-geist-mono), ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    background: var(--surface-muted);
+    border-radius: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+    line-height: 1.5rem;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  /* Enlace de salto: invisible hasta que el teclado lo enfoca. */
+  .lk-saltar {
+    position: fixed;
+    z-index: 100;
+    inset-block-start: 12px;
+    inset-inline-start: 12px;
+    translate: 0 -200%;
+    border-radius: 12px;
+    background: #fff;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--lk-navy-900);
+    box-shadow: 0 10px 30px -10px #06142b80;
+    transition: translate var(--lk-dur-corta) var(--lk-ease-salida);
+  }
+
+  .lk-saltar:focus-visible {
+    translate: 0;
+  }
+}
+
+/* ============ MOVIMIENTO ============ */
+
+@layer components {
+  .lk-anim {
+    animation: lk-fade-up var(--lk-dur-larga) var(--lk-ease-salida) backwards;
+  }
+
+  .lk-anim.lk-text-gradient,
+  .lk-anim.lk-text-gradient-portada {
+    animation:
+      lk-fade-up var(--lk-dur-larga) var(--lk-ease-salida) backwards,
+      lk-gradient-pan 7s ease-in-out 2 alternate;
+  }
+
+  .lk-delay-1 {
+    animation-delay: 90ms;
+  }
+  .lk-delay-2 {
+    animation-delay: 180ms;
+  }
+  .lk-delay-3 {
+    animation-delay: 270ms;
+  }
+  .lk-delay-4 {
+    animation-delay: 360ms;
+  }
+
+  /* Los hijos entran en cascada: el orden de aparición es el de lectura. */
+  .lk-escalonado > * {
+    animation: lk-fade-up var(--lk-dur-larga) var(--lk-ease-salida) backwards;
+    animation-delay: calc(var(--lk-escalon, 0) * var(--lk-escalonado));
+  }
+  .lk-escalonado > :nth-child(2) {
+    --lk-escalon: 1;
+  }
+  .lk-escalonado > :nth-child(3) {
+    --lk-escalon: 2;
+  }
+  .lk-escalonado > :nth-child(4) {
+    --lk-escalon: 3;
+  }
+  .lk-escalonado > :nth-child(5) {
+    --lk-escalon: 4;
+  }
+  .lk-escalonado > :nth-child(n + 6) {
+    --lk-escalon: 5;
+  }
+
+  /* Marcas de gráfico: las barras crecen desde su línea base y los puntos aparecen. */
+  .lk-graf-barra {
+    transform-box: fill-box;
+    transform-origin: left center;
+    animation: lk-crecer-x var(--lk-dur-grafica) var(--lk-ease-salida) backwards;
+    animation-delay: var(--lk-retraso, 0s);
+  }
+
+  .lk-graf-columna {
+    transform-box: fill-box;
+    transform-origin: bottom center;
+    animation: lk-crecer-y var(--lk-dur-grafica) var(--lk-ease-salida) backwards;
+    animation-delay: var(--lk-retraso, 0s);
+  }
+
+  .lk-graf-punto {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: lk-pop 0.45s var(--lk-ease-salida) backwards;
+    animation-delay: var(--lk-retraso, 0s);
+  }
+
+  .lk-graf-trazo {
+    stroke-dasharray: 1;
+    animation: lk-trazo var(--lk-dur-grafica) var(--lk-ease-io) backwards;
+  }
+
+  .lk-graf-celda {
+    animation: lk-fundido var(--lk-dur-corta) ease-out backwards;
+    animation-delay: var(--lk-retraso, 0s);
+  }
+
+  .lk-burbuja {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: lk-bubble-in 0.65s var(--lk-ease-rebote) backwards;
+    animation-delay: var(--lk-retraso, 0s);
+  }
+
+  .lk-check {
+    stroke-dasharray: 26;
+    stroke-dashoffset: 26px;
+    animation: lk-check-draw 0.5s ease-out 0.2s forwards;
+  }
+
+  .lk-atenuable {
+    transition: opacity var(--lk-dur-media) var(--lk-ease-salida);
+  }
+}
+
+@keyframes lk-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes lk-gradient-pan {
+  to {
+    background-position: 100% 0;
+  }
+}
+
+@keyframes lk-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+@keyframes lk-crecer-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes lk-crecer-y {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes lk-trazo {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+@keyframes lk-fundido {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes lk-bubble-in {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+
+@keyframes lk-check-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lk-pulso {
+  0% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  80%,
+  100% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+
+/* Quien pidió menos movimiento recibe la interfaz quieta, no una versión más lenta. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .lk-check {
+    stroke-dashoffset: 0;
+  }
+
+  .lk-en-vivo::after {
+    display: none;
+  }
+}
+
+/*
+ * El panel se presenta, y presentar todavía significa a menudo repartir un PDF. Esto es lo
+ * que hace que «Imprimir» produzca un documento y no una captura de una aplicación: fuera
+ * el chrome de navegación, la portada pasa a papel blanco, y ninguna tarjeta queda partida
+ * a la mitad por un salto de página.
+ */
+@media print {
+  body {
+    background: #ffffff;
+  }
+
+  .lk-no-imprimir,
+  .lk-saltar {
+    display: none !important;
+  }
+
+  .lk-reticula {
+    display: none !important;
+  }
+
+  .lk-portada,
+  .lk-vidrio {
+    background: #ffffff !important;
+    box-shadow: inset 0 0 0 1px #cbd5e1 !important;
+    backdrop-filter: none !important;
+  }
+
+  .lk-portada,
+  .lk-portada * {
+    color: #0a1f3d !important;
+  }
+
+  .lk-text-gradient,
+  .lk-text-gradient-portada {
+    color: #0a6cb1 !important;
+    -webkit-text-fill-color: currentColor !important;
+    background: none !important;
+  }
+
+  .lk-tarjeta,
+  section,
+  article,
+  table,
+  li {
+    break-inside: avoid;
+  }
+
+  /* Los colores de banda y de rampa son el dato, no decoración: deben salir impresos. */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

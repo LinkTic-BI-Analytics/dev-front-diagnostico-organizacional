@@ -1,0 +1,15 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 768, "h": 1460, "title": "Bienvenida · el recorrido de un vistazo" },
+    { "file": "Bloque1Relacionamiento.dc.html", "x": 888, "y": 0, "w": 768, "h": 1180, "title": "Bloque 1 · Relacionamiento (azul)" },
+    { "file": "Bloque2Operacion.dc.html", "x": 1776, "y": 0, "w": 768, "h": 1180, "title": "Bloque 2 · Cómo funciona la empresa (teal)" },
+    { "file": "Bloque3Cultura.dc.html", "x": 2664, "y": 0, "w": 768, "h": 1180, "title": "Bloque 3 · Cultura (verde)" },
+    { "file": "Bloque4Cierre.dc.html", "x": 3552, "y": 0, "w": 768, "h": 1180, "title": "Bloque 4 · Qué debemos cambiar (ámbar)" },
+    { "file": "Movil.dc.html", "x": 0, "y": 1600, "w": 390, "h": 844, "title": "Móvil · 390 px" }
+  ],
+  "annotations": [
+    { "id": "nota-color", "x": 888, "y": -150, "w": 2650, "text": "El color no vive solo en la barra: tiñe el título del componente, la cinta de fase, el botón Continuar y la casilla seleccionada de la escala 0–10. Al pasar de bloque cambia el tono de toda la pantalla, que es la señal de «esto ya es otra cosa».\nLos cuatro tonos salen del Manual de Marca (azul y verde de la gama principal, teal y ámbar de los complementarios). El coral queda reservado al error." },
+    { "id": "nota-movil", "x": 470, "y": 1600, "w": 330, "text": "En móvil la escala pasa a dos filas de seis con 46 px de alto (hoy son ~36 px, poco para el pulgar en 46 escalas seguidas) y el botón Continuar queda fijo abajo: nunca hay que buscarlo." }
+  ],
+  "launch": { "view": "canvas" }
+}
