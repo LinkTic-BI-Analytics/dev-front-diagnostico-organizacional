@@ -1,6 +1,6 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from './generated/prisma/client';
-import { runtimeDatabaseUrl } from './env';
+import { DATABASE_SCHEMA, runtimeDatabaseUrl } from './env';
 
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
 
@@ -32,7 +32,10 @@ export function normalizeConnectionString(url: string): string {
 
 export function createPrismaClient(url = runtimeDatabaseUrl()): PrismaClient {
   return new PrismaClient({
-    adapter: new PrismaPg({ connectionString: normalizeConnectionString(url) }),
+    adapter: new PrismaPg(
+      { connectionString: normalizeConnectionString(url) },
+      { schema: DATABASE_SCHEMA },
+    ),
   });
 }
 

@@ -27,16 +27,20 @@ ALTER TABLE "survey_responses" ENABLE ROW LEVEL SECURITY;
 -- Además se retiran los privilegios de esos roles, también los que recibirían las tablas
 -- futuras: dos barreras en vez de una. Los roles solo existen en Supabase; en otro
 -- Postgres (una base local de pruebas) el bloque no hace nada.
+--
+-- Solo en el esquema de la migración (`current_schema()`, el `?schema=` de la cadena del
+-- CLI: `mod_encuestas`). Fijado a `public`, retiraba también el acceso de esos roles a las
+-- tablas de `public` que no son de este sistema.
 DO $$
 DECLARE
   rol text;
 BEGIN
   FOREACH rol IN ARRAY ARRAY['anon', 'authenticated'] LOOP
     IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = rol) THEN
-      EXECUTE format('REVOKE ALL ON ALL TABLES IN SCHEMA public FROM %I', rol);
-      EXECUTE format('REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM %I', rol);
-      EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM %I', rol);
-      EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON SEQUENCES FROM %I', rol);
+      EXECUTE format('REVOKE ALL ON ALL TABLES IN SCHEMA %I FROM %I', current_schema(), rol);
+      EXECUTE format('REVOKE ALL ON ALL SEQUENCES IN SCHEMA %I FROM %I', current_schema(), rol);
+      EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA %I REVOKE ALL ON TABLES FROM %I', current_schema(), rol);
+      EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA %I REVOKE ALL ON SEQUENCES FROM %I', current_schema(), rol);
     END IF;
   END LOOP;
 END $$;

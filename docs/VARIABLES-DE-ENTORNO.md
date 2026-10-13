@@ -103,6 +103,14 @@ Dos fallos que parecen otra cosa:
 
 Ruta en el panel: **Project Settings → Database → Connection string → Connection pooling**.
 
+**Las tablas viven en el esquema `mod_encuestas`, no en `public`.** El esquema no se configura
+con una variable: está fijo en [`env.ts`](../src/server/env.ts) (`DATABASE_SCHEMA`) para que
+ningún ambiente escriba en otro por olvido. Las cadenas se copian tal cual del panel, sin
+`?schema=`. El runtime le pasa el esquema al adapter de Prisma, que califica cada tabla con
+él. El CLI lo recibe como `?schema=` en su cadena, y `migrate` crea el esquema si no existe.
+En el editor SQL de Supabase, que busca en `public`, las tablas se nombran con su esquema
+(`mod_encuestas.survey_responses`) o se fija antes `SET search_path TO mod_encuestas;`.
+
 `prisma generate` —que corre en cada `npm install` y en el build de Vercel— **no necesita** base
 de datos: `prisma.config.ts` acepta que falte `DIRECT_URL`.
 

@@ -35,6 +35,17 @@ function firstOf(...names: string[]): string | undefined {
 }
 
 /**
+ * Esquema de Postgres donde viven las tablas del sistema: `mod_encuestas`, no `public`.
+ *
+ * Va fijo en el código y no en una variable para que ningún ambiente escriba en otro esquema
+ * por olvidar declararla. El runtime se lo pasa al adapter de Prisma (`db.ts`), que califica
+ * cada tabla con él: el pooler en modo transacción no conserva un `search_path` entre
+ * sentencias. El CLI lo recibe como `?schema=` en su cadena (`migrationsDatabaseUrl`), y
+ * `migrate` crea el esquema si no existe.
+ */
+export const DATABASE_SCHEMA = 'mod_encuestas';
+
+/**
  * Cadena de conexión del runtime: el pooler de Supabase en modo TRANSACCIÓN (6543), el que
  * soporta las muchas conexiones efímeras de las funciones de Vercel.
  *
@@ -58,9 +69,15 @@ export function runtimeDatabaseUrl(): string {
  * Cadena del CLI de Prisma (`migrate`, `db seed`): el pooler en modo SESIÓN (5432).
  * `migrate` toma locks de sesión que el modo transacción no conserva entre sentencias:
  * apuntada al 6543, la migración se queda colgada sin mensaje de error.
+ *
+ * Sale con `?schema=` (`DATABASE_SCHEMA`): sin él, `migrate` crea las tablas en `public`.
  */
 export function migrationsDatabaseUrl(): string | undefined {
-  return firstOf('DIRECT_URL', 'POSTGRES_URL_NON_POOLING');
+  const url = firstOf('DIRECT_URL', 'POSTGRES_URL_NON_POOLING');
+  if (!url) return undefined;
+  const parsed = new URL(url);
+  parsed.searchParams.set('schema', DATABASE_SCHEMA);
+  return parsed.toString();
 }
 
 export const serverEnv = {

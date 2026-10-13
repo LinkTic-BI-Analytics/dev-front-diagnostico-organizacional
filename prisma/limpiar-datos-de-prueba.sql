@@ -9,9 +9,13 @@
 -- datos reales: no se ejecuta sin revisar primero qué hay.
 --
 -- Comprobar antes qué se va a borrar:
---   SELECT status, count(*) FROM survey_responses GROUP BY status;
+--   SELECT status, count(*) FROM mod_encuestas.survey_responses GROUP BY status;
 
 BEGIN;
+
+-- Las tablas viven en `mod_encuestas` (src/server/env.ts — DATABASE_SCHEMA), no en `public`,
+-- que es donde busca el editor SQL de Supabase.
+SET LOCAL search_path TO mod_encuestas;
 
 -- Las respuestas cuelgan de la encuesta; se borran primero por si la FK no cascadea.
 DELETE FROM answers

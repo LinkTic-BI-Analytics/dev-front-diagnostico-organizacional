@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { normalizeConnectionString } from './db';
+import { migrationsDatabaseUrl } from './env';
 
 const params = (url: string) => new URL(url).searchParams;
 
@@ -40,5 +41,28 @@ describe('normalizeConnectionString', () => {
       'postgresql://postgres.ref:cl%21ve%23@host.supabase.com:6543/postgres',
     );
     expect(new URL(url).password).toBe('cl%21ve%23');
+  });
+});
+
+describe('migrationsDatabaseUrl', () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it('apunta el CLI al esquema mod_encuestas', () => {
+    vi.stubEnv('DIRECT_URL', 'postgresql://postgres.ref:cl%21ve@host.supabase.com:5432/postgres');
+    const url = migrationsDatabaseUrl()!;
+    expect(params(url).get('schema')).toBe('mod_encuestas');
+    expect(new URL(url).password).toBe('cl%21ve');
+  });
+
+  it('también con la cadena de la integración de Vercel', () => {
+    vi.stubEnv('DIRECT_URL', '');
+    vi.stubEnv('POSTGRES_URL_NON_POOLING', 'postgres://postgres.ref:clave@host.supabase.com:5432/postgres?sslmode=require');
+    expect(params(migrationsDatabaseUrl()!).get('schema')).toBe('mod_encuestas');
+  });
+
+  it('sigue sin exigir base de datos para `prisma generate`', () => {
+    vi.stubEnv('DIRECT_URL', '');
+    vi.stubEnv('POSTGRES_URL_NON_POOLING', '');
+    expect(migrationsDatabaseUrl()).toBeUndefined();
   });
 });
