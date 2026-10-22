@@ -120,15 +120,7 @@ export function MultiChoiceField({
                 : 'border-border-subtle bg-surface text-foreground-muted hover:border-phase hover:text-phase',
             ].join(' ')}
           >
-            <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" aria-hidden>
-              <path
-                d="M10 2.5 12.2 7l5 .7-3.6 3.5.9 5-4.5-2.4L5.5 16.2l.9-5L2.8 7.7l5-.7z"
-                fill={isPrimary ? 'currentColor' : 'none'}
-                stroke="currentColor"
-                strokeWidth="1.4"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <Star filled={isPrimary} className="h-3.5 w-3.5" />
             {/* En cuanto la lista se parte en tres queda solo la estrella: el rótulo se
                 comería el ancho de la etiqueta del área, que es lo que hay que leer. La
                 columna no se ensancha más allá de ahí, así que tampoco vuelve en xl. */}
@@ -148,6 +140,21 @@ export function MultiChoiceField({
 
   return (
     <div className="flex flex-col gap-2">
+      {/*
+       * La estrella solo aparece junto a las áreas ya marcadas, así que sin esta leyenda
+       * nadie sabe para qué sirve hasta haber elegido. Va arriba y no al pie: con cincuenta
+       * subprocesos, el pie queda a varios scrolls de distancia.
+       */}
+      {primary && (
+        <p className="flex items-start gap-2.5 rounded-xl bg-phase-subtle px-4 py-3 text-sm text-foreground">
+          <Star filled className="mt-0.5 h-4 w-4 shrink-0 text-phase" />
+          <span>
+            Después de seleccionar sus áreas, marque con la <strong>estrella</strong> el área
+            con la que tiene <strong>mayor relacionamiento</strong>. Solo se marca una.
+          </span>
+        </p>
+      )}
+
       <div aria-invalid={error ? true : undefined}>
         <OptionList groups={groups} showHeadings={showHeadings}>
           {renderOption}
@@ -190,5 +197,20 @@ export function MultiChoiceField({
         </p>
       )}
     </div>
+  );
+}
+
+/** La estrella de la relación principal: rellena cuando está marcada. */
+function Star({ filled, className }: { filled: boolean; className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" className={className} aria-hidden>
+      <path
+        d="M10 2.5 12.2 7l5 .7-3.6 3.5.9 5-4.5-2.4L5.5 16.2l.9-5L2.8 7.7l5-.7z"
+        fill={filled ? 'currentColor' : 'none'}
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }

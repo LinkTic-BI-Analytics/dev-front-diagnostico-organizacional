@@ -31,6 +31,10 @@ encuesta **una sola vez**.
   subproceso (Comercial, Mejoramiento continuo…), se marca solo. La revisión final muestra
   los dos. De paso se corrigió que, en el teléfono, los campos y las instrucciones se
   salieran de la tarjeta: la grilla tomaba el ancho de la opción más larga del selector.
+- **La estrella del componente 1 tiene leyenda.** Sobre la lista de áreas de 1.1 se explica
+  que la estrella marca el área con la que se tiene mayor relacionamiento (`c1_area_principal`).
+  Antes solo aparecía junto a las áreas ya marcadas, sin decir para qué servía. Es texto de la
+  pantalla: el del catálogo no cambia y no hay que volver a sembrar.
 
 **Para desplegarlo:** aplicar la migración (`npm run prisma:deploy`) y **cargar la nómina antes
 de publicar el cambio**. Con la tabla vacía, nadie puede empezar la encuesta.
