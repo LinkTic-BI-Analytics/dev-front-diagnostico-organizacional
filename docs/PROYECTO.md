@@ -24,7 +24,7 @@ npm install                          # genera también el cliente de Prisma
 cp .env.example .env.local           # complete DATABASE_URL, DIRECT_URL, JWT_SECRET, HASH_SALT
 # o, con el proyecto enlazado a Vercel:  npx vercel env pull .env.local
 
-npm run prisma:deploy                # solo en una base nueva: crea las 11 tablas
+npm run prisma:deploy                # solo en una base nueva: crea las 12 tablas
 npm run prisma:seed                  # siembra el catálogo del instrumento (idempotente)
 npm run prisma:simulacion            # opcional: 68 respuestas simuladas para ver el panel
 
@@ -145,9 +145,9 @@ el cascarón evita mandar HTML vacío mientras llega el primer fetch.
 
 ```
 prisma/
-├── schema.prisma           11 tablas; el cliente se genera en src/server/generated (sin versionar)
+├── schema.prisma           12 tablas; el cliente se genera en src/server/generated (sin versionar)
 ├── migrations/             0001_init · 0002_arbol_de_procesos · 0003_anclas_de_escala ·
-│                           0004_rls_sin_acceso_publico
+│                           0004_rls_sin_acceso_publico · 0005_colaboradores
 ├── migrations.spec.ts      exige RLS en toda tabla que creen las migraciones
 ├── catalog.ts              el instrumento: organigrama, componentes, preguntas, pesos, bandas
 ├── seed.ts                 siembra el catálogo (idempotente)
@@ -224,7 +224,10 @@ secretos; `src/lib` es lo que corre en el navegador y habla con el servidor solo
 ## Decisiones de producto y privacidad
 
 **La encuesta es anónima, y por eso la identificación es obligatoria.** No se pide el nombre
-—se retiró el 14-sep-2026, junto con la columna `respondent_name`—. Lo que sí se pide, antes de
+—se retiró el 14-sep-2026, junto con la columna `respondent_name`—. Desde el 22-oct-2026 se
+pide el **número de documento**, pero solo para verificar que la persona esté en la nómina
+(`colaboradores`) y no haya respondido ya: cada colaborador responde **una sola vez**, y el
+documento no queda unido a sus respuestas (ver [Modelo de datos](#modelo-de-datos)). Lo que sí se pide, antes de
 empezar y sin opción de saltarlo, es **el área y el cargo**: ninguno de los dos identifica a
 una persona, y sin ellos no hay filas en el mapa de relacionamiento ni cortes por nivel. El
 cargo es una lista cerrada de siete niveles (Director, Gerente, Head, Coordinador, Líder,
@@ -610,9 +613,10 @@ que **añadir una pregunta al instrumento no obliga a tocar código de validaci�
 
 ## Modelo de datos
 
-11 tablas ([`prisma/schema.prisma`](../prisma/schema.prisma)):
+12 tablas ([`prisma/schema.prisma`](../prisma/schema.prisma)):
 
 **Catálogo** — `areas`, `procesos`, `components`, `questions`, `question_options`
+**Nómina** — `colaboradores`
 **Campañas** — `campaigns`
 **Respuestas** — `survey_responses`, `answers`
 **Configuración** — `indicator_weights`, `indicator_thresholds`
@@ -633,6 +637,11 @@ marca como "(Lista)" lean del catálogo vivo en vez de duplicarlo en `question_o
 
 **Las IPs y los user agents se guardan hasheados** (`ip_hash`, `user_agent_hash`), nunca en
 claro. La sal es `HASH_SALT`.
+
+**`survey_responses.numero_documento` solo tiene valor mientras la encuesta es borrador.**
+Al enviarla se marca `colaboradores.ya_respondio` y la columna se vacía; al cerrar una
+campaña se vacía también en los borradores que quedaron. Una respuesta enviada no guarda
+nada que la una a la persona.
 
 ### Prisma 7 en Next
 

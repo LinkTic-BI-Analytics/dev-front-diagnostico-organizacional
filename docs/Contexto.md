@@ -182,6 +182,7 @@ Campos del encabezado del PDF: **Nombre**, **Cargo**, **Área**, **Fecha**.
 
 | Campo | Columna | Tipo | Obligatorio | Nota |
 |---|---|---|---|---|
+| Número de documento | `survey_responses.numero_documento` (solo mientras es borrador) | Texto, contra `colaboradores` | **Sí** | Añadido el 22-oct-2026. Debe estar en la nómina y no tener `ya_respondio`. Al enviar se marca `ya_respondio` y se borra de la respuesta |
 | Área | `own_area` | SINGLE (catálogo de áreas, agrupado por gestión) | **Sí** | Era la pregunta 1.1; se pide antes de empezar porque condiciona todo lo que sigue |
 | Cargo | `respondent_role` | SINGLE (lista cerrada) | **Sí** | `DIRECTOR`, `GERENTE`, `HEAD`, `COORDINADOR`, `LIDER`, `PROFESIONAL`, `ANALISTA` |
 | Nombre | — | — | — | **Se retira.** La columna `respondent_name` se elimina |
@@ -194,6 +195,14 @@ mapa de relacionamiento ni cortes por nivel, así que pasan a ser obligatorios. 
 
 El cargo se guarda como **código de una lista cerrada**, no como texto libre, para que los
 cortes del panel no dependan de cómo lo escriba cada persona.
+
+**Actualizado el 22-oct-2026: cada colaborador responde una sola vez.** La identificación
+pide el número de documento y la API lo busca en `colaboradores` (la nómina: documento,
+nombre, cargo, proceso y subproceso) al pulsar «Empezar»: si no está, o ya tiene
+`ya_respondio`, no se abre el borrador. El documento se compara sin puntos, espacios ni
+guiones y en mayúsculas. La encuesta **sigue siendo anónima**: el documento acompaña al
+borrador solo hasta el envío, que marca `ya_respondio` —sin hora ni vínculo con la
+respuesta— y lo borra de `survey_responses`.
 
 ---
 

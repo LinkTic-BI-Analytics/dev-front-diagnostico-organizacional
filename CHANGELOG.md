@@ -6,6 +6,37 @@ Lo que cambió en el sistema y por qué, del más reciente al más antiguo. El e
 
 ---
 
+## 22-oct-2026: la nómina de colaboradores y una sola respuesta por persona
+
+La identificación pide ahora el **número de documento**, y cada colaborador responde la
+encuesta **una sola vez**.
+
+- **Tabla nueva `colaboradores`** (migración
+  [`0005_colaboradores`](prisma/migrations/0005_colaboradores/migration.sql)): número de
+  documento (llave), nombre, cargo, proceso, subproceso y `ya_respondio`. Con RLS, como las
+  demás.
+- **Al pulsar «Empezar»** la API busca el documento: si no está en la nómina responde 404, y
+  si ya respondió, 409. El mensaje sale junto al campo. El documento se compara sin puntos,
+  espacios ni guiones y en mayúsculas (`normalizeNumeroDocumento`).
+- **Al enviar**, en una sola transacción, se marca `ya_respondio` (solo si estaba en `false`)
+  y se cierra la encuesta. Un segundo borrador de la misma persona, abierto en otro equipo,
+  ya no se puede enviar, ni siquiera si los dos se envían a la vez.
+- **La encuesta sigue siendo anónima.** El documento vive en `survey_responses` solo mientras
+  es borrador: el envío lo borra, y cerrar una campaña lo borra de los borradores que
+  quedaron. `ya_respondio` no guarda hora ni a qué respuesta corresponde.
+- `limpiar-datos-de-prueba.sql` quita también la marca `ya_respondio`: si no, quien probó la
+  encuesta no podría responder la de verdad.
+
+**Para desplegarlo:** aplicar la migración (`npm run prisma:deploy`) y **cargar la nómina antes
+de publicar el cambio**. Con la tabla vacía, nadie puede empezar la encuesta.
+
+**Verificación:** tipos, lint y los tests (cuatro nuevos para la normalización del documento),
+y el flujo contra una base local de `prisma dev` con las migraciones aplicadas: documento
+fuera de la nómina, documento normalizado, segundo borrador, envío, reintento, dos envíos
+simultáneos, borrador anterior al cambio, cierre de campaña y campaña nueva. 16 de 16.
+
+---
+
 ## 9-oct-2026 (2): validación para Vercel y organización del repositorio
 
 Se validó el proyecto como lo construye y despliega Vercel, y se ordenó el repositorio con la

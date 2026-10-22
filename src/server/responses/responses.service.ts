@@ -13,14 +13,27 @@ import { findMissingAnswers } from './rules/completeness.rule';
 import { runRules } from './rules';
 import type { CatalogQuestion, IncomingAnswer } from './rules';
 import type { SaveStepInput } from './save-step.schema';
+import type { StartResponseInput } from './start-response.schema';
 
 export interface RequestFingerprint {
   ip?: string;
   userAgent?: string;
 }
 
-/** Abre un borrador contra la campaña activa y devuelve el token para retomarlo. */
-export async function startResponse(fingerprint: RequestFingerprint) {
+const ALREADY_PARTICIPATED =
+  'Este número de documento ya registró la encuesta. Gracias por participar.';
+
+/**
+ * Abre un borrador contra la campaña activa y devuelve el token para retomarlo.
+ *
+ * Solo para quien está en la nómina y no ha enviado la encuesta. Un borrador suyo sin
+ * terminar no lo impide: quien cambió de equipo o borró el navegador empieza de nuevo, y
+ * la marca `yaRespondio` evita que se envíen los dos.
+ */
+export async function startResponse(
+  input: StartResponseInput,
+  fingerprint: RequestFingerprint,
+) {
   const prisma = db();
   const campaign = await prisma.campaign.findFirst({
     where: { isOpen: true },
@@ -30,10 +43,13 @@ export async function startResponse(fingerprint: RequestFingerprint) {
     throw new HttpError(409, 'No hay una campaña de diagnóstico abierta.');
   }
 
+  await assertCanParticipate(input.numeroDocumento);
+
   const salt = serverEnv.hashSalt;
   const response = await prisma.surveyResponse.create({
     data: {
       campaignId: campaign.id,
+      numeroDocumento: input.numeroDocumento,
       draftToken: generateDraftToken(),
       ipHash: fingerprint.ip ? hashWithSalt(fingerprint.ip, salt) : null,
       userAgentHash: fingerprint.userAgent
@@ -60,6 +76,7 @@ export async function getDraft(draftToken: string) {
     lastStep: response.lastStep,
     ownArea: response.ownArea,
     respondentRole: response.respondentRole,
+    numeroDocumento: response.numeroDocumento,
     answers: response.answers.map((answer) => ({
       questionCode: answer.questionCode,
       targetArea: answer.targetArea,
@@ -197,15 +214,43 @@ export async function submitResponse(draftToken: string) {
     });
   }
 
+  // El documento se fija al abrir el borrador y ningún paso lo recibe después: un borrador
+  // abierto antes de que la encuesta lo pidiera no tiene cómo completarlo.
+  const { numeroDocumento } = response;
+  if (!numeroDocumento) {
+    throw new HttpError(
+      409,
+      'Este borrador es anterior a la verificación por número de documento. Empiece la encuesta de nuevo.',
+    );
+  }
+
   const submittedAt = new Date();
   const durationSeconds = Math.max(
     0,
     Math.round((submittedAt.getTime() - response.startedAt.getTime()) / 1000),
   );
 
-  await db().surveyResponse.update({
-    where: { id: response.id },
-    data: { status: 'COMPLETED', submittedAt, durationSeconds },
+  // La marca y el cierre van juntos. La marca solo se pone si no estaba: si el documento ya
+  // envió otro borrador (otro equipo, otra pestaña), no cambia ninguna fila y este no se
+  // cierra. Dos envíos a la vez no pasan los dos: Postgres bloquea la fila del colaborador y
+  // el segundo vuelve a evaluar `yaRespondio` cuando el primero confirma. Al cerrar se borra
+  // el documento de la respuesta: desde aquí nada la une a la persona.
+  await db().$transaction(async (tx) => {
+    const marked = await tx.colaborador.updateMany({
+      where: { numeroDocumento, yaRespondio: false },
+      data: { yaRespondio: true },
+    });
+    if (marked.count === 0) throw documentoError(409, ALREADY_PARTICIPATED);
+
+    await tx.surveyResponse.update({
+      where: { id: response.id },
+      data: {
+        status: 'COMPLETED',
+        submittedAt,
+        durationSeconds,
+        numeroDocumento: null,
+      },
+    });
   });
 
   return {
@@ -238,6 +283,35 @@ async function assertCampaignOpen(campaignId: string) {
   if (!campaign?.isOpen) {
     throw new HttpError(409, 'La campaña de diagnóstico está cerrada.');
   }
+}
+
+/**
+ * El documento tiene que estar en la nómina y no haber enviado ya la encuesta. Es lo único
+ * que se comprueba al empezar: área y cargo los sigue declarando la persona.
+ */
+async function assertCanParticipate(numeroDocumento: string) {
+  const colaborador = await db().colaborador.findUnique({
+    where: { numeroDocumento },
+    select: { yaRespondio: true },
+  });
+  if (!colaborador) {
+    throw documentoError(
+      404,
+      'No encontramos ese número de documento entre los colaboradores. Verifíquelo o comuníquese con Talento humano.',
+    );
+  }
+  if (colaborador.yaRespondio) {
+    throw documentoError(409, ALREADY_PARTICIPATED);
+  }
+}
+
+/** Error del número de documento. `field` le dice a la bienvenida junto a qué campo pintarlo. */
+function documentoError(status: number, message: string) {
+  return new HttpError(status, {
+    statusCode: status,
+    message,
+    field: 'numeroDocumento',
+  });
 }
 
 /** El área propia tiene que ser un subproceso vigente del organigrama. */

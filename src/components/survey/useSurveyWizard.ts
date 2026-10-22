@@ -199,26 +199,33 @@ export function useSurveyWizard() {
     );
     setIdentityErrors(problems);
     if (Object.keys(problems).length > 0) {
-      setStepError('Indique su área y su cargo para continuar.');
+      setStepError('Indique su número de documento, su área y su cargo para continuar.');
       return false;
     }
     setStepError(null);
     return true;
   }, [schema, identity]);
 
-  /** Abre un borrador nuevo. */
+  /**
+   * Abre un borrador nuevo. Es aquí donde el servidor revisa el documento: si no está en la
+   * nómina o ya respondió, se dice antes de empezar y no al final.
+   */
   const begin = useCallback(async () => {
     if (!checkIdentity()) return;
 
     setBusy(true);
     setStepError(null);
     try {
-      const { draftToken: token } = await startResponse();
+      const { draftToken: token } = await startResponse(identity.numeroDocumento);
       setDraftToken(token);
       saveDraftPointer(token, 0);
       setStarted(true);
       setStepIndex(1);
     } catch (error) {
+      if (error instanceof ApiError && isDocumentoError(error)) {
+        setIdentityErrors({ numeroDocumento: error.message });
+        return;
+      }
       setStepError(
         error instanceof ApiError
           ? error.message
@@ -227,7 +234,7 @@ export function useSurveyWizard() {
     } finally {
       setBusy(false);
     }
-  }, [checkIdentity]);
+  }, [checkIdentity, identity.numeroDocumento]);
 
   /** Retoma el borrador guardado en este navegador. */
   const resume = useCallback(async () => {
@@ -241,6 +248,17 @@ export function useSurveyWizard() {
       if (draft.status === 'COMPLETED') {
         clearDraftPointer();
         setSubmitted(true);
+        return;
+      }
+
+      // Un borrador abierto antes de que se pidiera el documento no se puede enviar: el
+      // servidor lo rechazaría al final. Mejor decirlo ahora que tras responderlo entero.
+      if (!draft.numeroDocumento) {
+        clearDraftPointer();
+        setResumable(false);
+        setStepError(
+          'Su borrador es anterior a la verificación por número de documento. Empiece de nuevo.',
+        );
         return;
       }
 
@@ -263,6 +281,7 @@ export function useSurveyWizard() {
       setDraftToken(pointer.draftToken);
       setAnswers(restored);
       setIdentity({
+        numeroDocumento: draft.numeroDocumento,
         ownArea: draft.ownArea ?? '',
         respondentRole: draft.respondentRole ?? '',
       });
@@ -462,6 +481,11 @@ export function useSurveyWizard() {
     evaluableAreas,
     actions: { begin, resume, goBack, goNext, goToComponent, setAnswer, setIdentity, finish },
   };
+}
+
+/** El servidor rechazó el documento: no está en la nómina o ya respondió esta campaña. */
+function isDocumentoError(error: ApiError): boolean {
+  return (error.body as { field?: string } | undefined)?.field === 'numeroDocumento';
 }
 
 /** Traduce un 422 del servidor a errores por campo. */

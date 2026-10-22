@@ -134,6 +134,27 @@ model Campaign {
   @@map("campaigns")
 }
 
+// ============ COLABORADORES ============
+
+/// La nómina: quién puede responder la encuesta. El número de documento es con el que cada
+/// persona se identifica al empezar; se guarda sin puntos, espacios ni guiones y en
+/// mayúsculas (`normalizeNumeroDocumento`), que es como lo compara la API.
+model Colaborador {
+  numeroDocumento String  @id @map("numero_documento")
+  nombre          String
+  cargo           String?
+  proceso         String?
+  subproceso      String?
+  /// Ya envió la encuesta: cada colaborador responde una sola vez. No hay hora ni vínculo
+  /// con la respuesta a propósito: con cualquiera de los dos se podría cruzar a la persona
+  /// con lo que respondió.
+  yaRespondio     Boolean @default(false) @map("ya_respondio")
+
+  responses SurveyResponse[]
+
+  @@map("colaboradores")
+}
+
 // ============ RESPUESTAS ============
 
 model SurveyResponse {
@@ -153,9 +174,15 @@ model SurveyResponse {
   createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamptz
 
-  campaign Campaign @relation(fields: [campaignId], references: [id])
-  area     Area?    @relation(fields: [ownArea], references: [code])
-  answers  Answer[]
+  /// Quién abrió el borrador. Solo vive mientras la encuesta es borrador: al enviarla se
+  /// marca `colaboradores.ya_respondio` y aquí se borra, para que la respuesta siga siendo
+  /// anónima.
+  numeroDocumento String? @map("numero_documento")
+
+  campaign    Campaign     @relation(fields: [campaignId], references: [id])
+  area        Area?        @relation(fields: [ownArea], references: [code])
+  colaborador Colaborador? @relation(fields: [numeroDocumento], references: [numeroDocumento], onDelete: SetNull)
+  answers     Answer[]
 
   @@index([status, campaignId])
   @@index([ownArea])

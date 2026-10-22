@@ -71,13 +71,17 @@ export interface SurveySchema {
   };
 }
 
-/** Identificación previa a la encuesta. Ambos campos son obligatorios. */
+/**
+ * Identificación previa a la encuesta. Los tres campos son obligatorios. El documento solo
+ * comprueba que la persona esté en la nómina y no haya respondido ya: no viaja con los pasos.
+ */
 export interface Identity {
+  numeroDocumento: string;
   ownArea: string;
   respondentRole: string;
 }
 
-export const EMPTY_IDENTITY: Identity = { ownArea: '', respondentRole: '' };
+export const EMPTY_IDENTITY: Identity = { numeroDocumento: '', ownArea: '', respondentRole: '' };
 
 /** El centinela que el back usa para las respuestas globales. */
 export const GLOBAL_AREA_CODE = '__GLOBAL__';
@@ -135,6 +139,8 @@ export interface DraftResult {
   lastStep: number;
   ownArea: string | null;
   respondentRole: string | null;
+  /** `null` en un borrador abierto antes de que la encuesta pidiera el documento. */
+  numeroDocumento: string | null;
   answers: StoredAnswer[];
 }
 

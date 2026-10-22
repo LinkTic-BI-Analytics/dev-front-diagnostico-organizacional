@@ -124,10 +124,21 @@ export function validateStep(
 /**
  * Schema Zod de la identificación. Área y cargo son obligatorios: sin área no hay fila
  * en el mapa de relacionamiento y sin cargo no hay corte por nivel. La encuesta sigue
- * siendo anónima — no se pide el nombre.
+ * siendo anónima — no se pide el nombre, y el documento no queda unido a las respuestas.
+ *
+ * El documento se revisa solo en su forma, con la misma normalización del servidor
+ * (`start-response.schema.ts`); si está en la nómina lo decide el servidor al empezar.
  */
 export function buildIdentitySchema(areaCodes: string[], roleValues: string[]) {
   return z.object({
+    numeroDocumento: z
+      .string()
+      .transform((value) => value.replace(/[\s.-]/g, '').toUpperCase())
+      .refine((value) => value.length > 0, 'Indique su número de documento.')
+      .refine(
+        (value) => value.length === 0 || /^[0-9A-Z]{4,20}$/.test(value),
+        'El número de documento lleva entre 4 y 20 números o letras, sin otros símbolos.',
+      ),
     ownArea: z
       .string()
       .refine((code) => areaCodes.includes(code), 'Indique a qué área pertenece.'),
@@ -139,7 +150,7 @@ export function buildIdentitySchema(areaCodes: string[], roleValues: string[]) {
 
 /** Errores por campo de la identificación, en la forma que usa el paso de bienvenida. */
 export function validateIdentity(
-  identity: { ownArea: string; respondentRole: string },
+  identity: { numeroDocumento: string; ownArea: string; respondentRole: string },
   areaCodes: string[],
   roleValues: string[],
 ): Record<string, string> {

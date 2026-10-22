@@ -135,6 +135,7 @@ export function SurveyWizard() {
           schema={state.schema}
           identity={state.identity}
           identityErrors={state.identityErrors}
+          documentLocked
           onIdentityChange={actions.setIdentity}
           onStart={() => void actions.goNext()}
           busy={state.busy}

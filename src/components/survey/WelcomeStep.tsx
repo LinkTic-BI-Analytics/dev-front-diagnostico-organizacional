@@ -9,8 +9,13 @@ interface WelcomeStepProps {
   schema: SurveySchema;
   identity: Identity;
   onIdentityChange: (identity: Identity) => void;
-  /** Errores por campo de la identificación (`ownArea`, `respondentRole`). */
+  /** Errores por campo de la identificación (`numeroDocumento`, `ownArea`, `respondentRole`). */
   identityErrors?: Record<string, string>;
+  /**
+   * El borrador ya está abierto: el documento se verificó al empezar y ningún paso lo
+   * vuelve a enviar, así que se muestra pero no se edita.
+   */
+  documentLocked?: boolean;
   onStart: () => void;
   busy?: boolean;
   error?: string | null;
@@ -22,7 +27,7 @@ const RESPONSE_TYPES = [
   ['Escala 0 a 10', 'Seleccione el número que mejor represente su percepción.'],
 ];
 
-const SELECT_CLASS =
+const FIELD_CLASS =
   'min-h-12 rounded-xl border border-border-strong bg-white px-4 text-foreground transition-shadow focus-visible:border-lk-blue focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-lk-blue/15';
 
 export function WelcomeStep({
@@ -30,6 +35,7 @@ export function WelcomeStep({
   identity,
   onIdentityChange,
   identityErrors = {},
+  documentLocked,
   onStart,
   busy,
   error,
@@ -99,10 +105,36 @@ export function WelcomeStep({
           <div className="flex flex-col gap-1">
             <h2 className="text-[15px] text-foreground">Identificación</h2>
             <p className="text-xs text-foreground-muted">
-              La encuesta es anónima: no se pide su nombre. El área y el cargo son necesarios
-              para leer los resultados por proceso y por nivel.
+              La encuesta es anónima. Su número de documento solo sirve para verificar que
+              cada colaborador responda una vez: no queda unido a sus respuestas. El área y el
+              cargo son necesarios para leer los resultados por proceso y por nivel.
             </p>
           </div>
+
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="text-foreground">Número de documento</span>
+            <input
+              type="text"
+              inputMode="text"
+              autoComplete="off"
+              spellCheck={false}
+              maxLength={40}
+              placeholder="Sin puntos ni espacios"
+              value={identity.numeroDocumento}
+              disabled={busy}
+              readOnly={documentLocked}
+              aria-invalid={identityErrors.numeroDocumento ? true : undefined}
+              onChange={(event) =>
+                onIdentityChange({ ...identity, numeroDocumento: event.target.value })
+              }
+              className={`${FIELD_CLASS} read-only:bg-surface-sunken read-only:text-foreground-muted`}
+            />
+            {identityErrors.numeroDocumento && (
+              <span role="alert" className="text-sm text-danger">
+                {identityErrors.numeroDocumento}
+              </span>
+            )}
+          </label>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
             <label className="flex flex-col gap-1.5 text-sm">
@@ -114,7 +146,7 @@ export function WelcomeStep({
                 onChange={(event) =>
                   onIdentityChange({ ...identity, ownArea: event.target.value })
                 }
-                className={SELECT_CLASS}
+                className={FIELD_CLASS}
               >
                 <option value="">Seleccione su área…</option>
                 {areasPorGestion.map(({ proceso, areas }) => (
@@ -143,7 +175,7 @@ export function WelcomeStep({
                 onChange={(event) =>
                   onIdentityChange({ ...identity, respondentRole: event.target.value })
                 }
-                className={SELECT_CLASS}
+                className={FIELD_CLASS}
               >
                 <option value="">Seleccione su cargo…</option>
                 {schema.roles.map((role) => (

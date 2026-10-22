@@ -23,9 +23,14 @@ WHERE response_id IN (SELECT id FROM survey_responses);
 
 DELETE FROM survey_responses;
 
--- Comprobar el resultado ANTES de confirmar. Deben salir dos ceros.
+-- Quien envió una encuesta de prueba quedó marcado como que ya respondió: sin quitar la
+-- marca, no podría responder la de verdad. La nómina en sí no se toca.
+UPDATE colaboradores SET ya_respondio = false WHERE ya_respondio;
+
+-- Comprobar el resultado ANTES de confirmar. Deben salir tres ceros.
 SELECT
-  (SELECT count(*) FROM survey_responses) AS respuestas_restantes,
-  (SELECT count(*) FROM answers)          AS respuestas_a_preguntas;
+  (SELECT count(*) FROM survey_responses)                 AS respuestas_restantes,
+  (SELECT count(*) FROM answers)                          AS respuestas_a_preguntas,
+  (SELECT count(*) FROM colaboradores WHERE ya_respondio) AS colaboradores_marcados;
 
 COMMIT;

@@ -55,6 +55,12 @@ export async function createCampaign(input: CreateCampaignInput) {
 
   return db().$transaction(async (tx) => {
     if (open) {
+      // Los borradores de la campaña que se cierra sueltan su documento, como en
+      // `closeCampaign`.
+      await tx.surveyResponse.updateMany({
+        where: { campaign: { isOpen: true }, numeroDocumento: { not: null } },
+        data: { numeroDocumento: null },
+      });
       await tx.campaign.updateMany({
         where: { isOpen: true },
         data: { isOpen: false, endsAt: new Date() },
@@ -71,14 +77,25 @@ export async function createCampaign(input: CreateCampaignInput) {
   });
 }
 
-/** Cerrar una campaña congela su corte: deja de aceptar respuestas nuevas. */
+/**
+ * Cerrar una campaña congela su corte: deja de aceptar respuestas nuevas.
+ *
+ * Los borradores que quedaron sin enviar sueltan su número de documento: ya no se pueden
+ * enviar, y lo que alcanzaron a responder no debe quedar unido a la persona.
+ */
 export async function closeCampaign(id: string) {
   const prisma = db();
   const campaign = await prisma.campaign.findUnique({ where: { id } });
   if (!campaign) throw new HttpError(404, 'La campaña no existe.');
 
-  return prisma.campaign.update({
-    where: { id },
-    data: { isOpen: false, endsAt: campaign.endsAt ?? new Date() },
+  return prisma.$transaction(async (tx) => {
+    await tx.surveyResponse.updateMany({
+      where: { campaignId: id, numeroDocumento: { not: null } },
+      data: { numeroDocumento: null },
+    });
+    return tx.campaign.update({
+      where: { id },
+      data: { isOpen: false, endsAt: campaign.endsAt ?? new Date() },
+    });
   });
 }

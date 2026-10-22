@@ -13,8 +13,11 @@ import {
 
 export const getSchema = () => apiFetch<SurveySchema>('/survey/schema');
 
-export const startResponse = () =>
-  apiFetch<StartResponseResult>('/responses', { method: 'POST' });
+export const startResponse = (numeroDocumento: string) =>
+  apiFetch<StartResponseResult>('/responses', {
+    method: 'POST',
+    body: { numeroDocumento },
+  });
 
 export const getDraft = (draftToken: string) =>
   apiFetch<DraftResult>(`/responses/${draftToken}`);
