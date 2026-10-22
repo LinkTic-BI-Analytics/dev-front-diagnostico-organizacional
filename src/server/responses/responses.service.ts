@@ -21,7 +21,7 @@ export interface RequestFingerprint {
 }
 
 const ALREADY_PARTICIPATED =
-  'Este número de documento ya registró la encuesta. Gracias por participar.';
+  'Este número de documento ya registró la encuesta. Cada colaborador responde una sola vez: gracias por participar.';
 
 /**
  * Abre un borrador contra la campaña activa y devuelve el token para retomarlo.
@@ -240,7 +240,9 @@ export async function submitResponse(draftToken: string) {
       where: { numeroDocumento, yaRespondio: false },
       data: { yaRespondio: true },
     });
-    if (marked.count === 0) throw documentoError(409, ALREADY_PARTICIPATED);
+    if (marked.count === 0) {
+      throw documentoError(409, 'YA_PARTICIPO', ALREADY_PARTICIPATED);
+    }
 
     await tx.surveyResponse.update({
       where: { id: response.id },
@@ -297,20 +299,30 @@ async function assertCanParticipate(numeroDocumento: string) {
   if (!colaborador) {
     throw documentoError(
       404,
+      'NO_REGISTRADO',
       'No encontramos ese número de documento entre los colaboradores. Verifíquelo o comuníquese con Talento humano.',
     );
   }
   if (colaborador.yaRespondio) {
-    throw documentoError(409, ALREADY_PARTICIPATED);
+    throw documentoError(409, 'YA_PARTICIPO', ALREADY_PARTICIPATED);
   }
 }
 
-/** Error del número de documento. `field` le dice a la bienvenida junto a qué campo pintarlo. */
-function documentoError(status: number, message: string) {
+/**
+ * Error del número de documento. `field` dice junto a qué campo pintarlo y `reason`, qué
+ * pasó: la ventana de identificación titula el aviso con él («Persona no registrada», «Ya
+ * participó»), sin depender del texto del mensaje.
+ */
+function documentoError(
+  status: number,
+  reason: 'NO_REGISTRADO' | 'YA_PARTICIPO',
+  message: string,
+) {
   return new HttpError(status, {
     statusCode: status,
     message,
     field: 'numeroDocumento',
+    reason,
   });
 }
 

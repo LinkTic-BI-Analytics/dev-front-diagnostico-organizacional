@@ -96,8 +96,12 @@ export function SurveyWizard() {
           schema={state.schema}
           identity={state.identity}
           identityErrors={state.identityErrors}
+          identityAlert={state.identityAlert}
+          identityOpen={state.identityOpen}
+          onOpenIdentity={actions.openIdentity}
+          onCloseIdentity={actions.closeIdentity}
           onIdentityChange={actions.setIdentity}
-          onStart={() => void actions.begin()}
+          onSubmitIdentity={() => void actions.begin()}
           busy={state.busy}
           error={state.stepError}
         />
@@ -135,9 +139,13 @@ export function SurveyWizard() {
           schema={state.schema}
           identity={state.identity}
           identityErrors={state.identityErrors}
-          documentLocked
+          identityAlert={state.identityAlert}
+          identityOpen={state.identityOpen}
+          onOpenIdentity={actions.openIdentity}
+          onCloseIdentity={actions.closeIdentity}
           onIdentityChange={actions.setIdentity}
-          onStart={() => void actions.goNext()}
+          started
+          onSubmitIdentity={() => void actions.goNext()}
           busy={state.busy}
           error={state.stepError}
         />

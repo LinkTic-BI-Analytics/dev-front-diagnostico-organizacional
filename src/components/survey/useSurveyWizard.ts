@@ -39,6 +39,23 @@ const TARGET_MINUTES = 15;
 
 type Answers = Record<string, AnswerValue | undefined>;
 
+/**
+ * El aviso de la ventana de identificación: un título que dice qué pasó («Persona no
+ * registrada», «Ya participó en la encuesta»…) y el detalle. Haber participado no es un
+ * error de datos, así que va con otro tono.
+ */
+export interface IdentityAlert {
+  tone: 'error' | 'info';
+  title: string;
+  message: string;
+}
+
+const DATOS_INCORRECTOS: IdentityAlert = {
+  tone: 'error',
+  title: 'Datos incorrectos',
+  message: 'Revise los campos señalados.',
+};
+
 export interface WizardState {
   schema: SurveySchema | null;
   loading: boolean;
@@ -55,6 +72,9 @@ export interface WizardState {
   remainingMinutes: number | null;
   identity: Identity;
   identityErrors: Record<string, string>;
+  /** La ventana de identificación está abierta. */
+  identityOpen: boolean;
+  identityAlert: IdentityAlert | null;
 }
 
 export function useSurveyWizard() {
@@ -72,6 +92,8 @@ export function useSurveyWizard() {
   const [submitted, setSubmitted] = useState(false);
   const [identity, setIdentity] = useState<Identity>(EMPTY_IDENTITY);
   const [identityErrors, setIdentityErrors] = useState<Record<string, string>>({});
+  const [identityOpen, setIdentityOpen] = useState(false);
+  const [identityAlert, setIdentityAlert] = useState<IdentityAlert | null>(null);
 
   /**
    * Hay respuestas escritas en este paso que todavía no viajaron al borrador. El borrador
@@ -199,16 +221,33 @@ export function useSurveyWizard() {
     );
     setIdentityErrors(problems);
     if (Object.keys(problems).length > 0) {
-      setStepError('Complete los datos de identificación señalados para continuar.');
+      setIdentityAlert(DATOS_INCORRECTOS);
       return false;
     }
-    setStepError(null);
+    setIdentityAlert(null);
     return true;
   }, [schema, identity]);
 
   /**
+   * La identificación se pide en una ventana aparte, al pulsar «Empezar»: la bienvenida
+   * queda para lo que se lee (el propósito, los bloques, cómo se responde).
+   */
+  const openIdentity = useCallback(() => {
+    setIdentityAlert(null);
+    setIdentityOpen(true);
+  }, []);
+
+  const closeIdentity = useCallback(() => setIdentityOpen(false), []);
+
+  /** Cambiar un dato deja atrás el aviso del intento anterior. */
+  const updateIdentity = useCallback((next: Identity) => {
+    setIdentity(next);
+    setIdentityAlert(null);
+  }, []);
+
+  /**
    * Abre un borrador nuevo. Es aquí donde el servidor revisa el documento: si no está en la
-   * nómina o ya respondió, se dice antes de empezar y no al final.
+   * nómina o ya respondió, se dice en la ventana antes de empezar y no al final.
    */
   const begin = useCallback(async () => {
     if (!checkIdentity()) return;
@@ -219,18 +258,14 @@ export function useSurveyWizard() {
       const { draftToken: token } = await startResponse(identity.numeroDocumento);
       setDraftToken(token);
       saveDraftPointer(token, 0);
+      setIdentityOpen(false);
       setStarted(true);
       setStepIndex(1);
     } catch (error) {
-      if (error instanceof ApiError && isDocumentoError(error)) {
-        setIdentityErrors({ numeroDocumento: error.message });
-        return;
+      setIdentityAlert(identityAlertFrom(error));
+      if (reasonOf(error) === 'NO_REGISTRADO') {
+        setIdentityErrors({ numeroDocumento: 'Verifique este número.' });
       }
-      setStepError(
-        error instanceof ApiError
-          ? error.message
-          : 'No pudimos iniciar la encuesta. Intente de nuevo.',
-      );
     } finally {
       setBusy(false);
     }
@@ -311,10 +346,14 @@ export function useSurveyWizard() {
   const goToComponent = useCallback(
     (componentId: number) => {
       // El componente 0 es la identificación, que no es un paso del instrumento sino la
-      // bienvenida. Es la misma convención que usa el back al reportar faltantes.
+      // bienvenida. Es la misma convención que usa el back al reportar faltantes. Quien
+      // llega aquí desde «Editar» quiere los datos, no releer la bienvenida: se abre la
+      // ventana de una vez.
       if (componentId === 0) {
         setStepIndex(0);
         setStepError(null);
+        setIdentityAlert(null);
+        setIdentityOpen(true);
         return;
       }
 
@@ -358,7 +397,11 @@ export function useSurveyWizard() {
             ),
           );
           setStepIndex(0);
-          setStepError('Falta la identificación: complete los datos señalados.');
+          setIdentityAlert({
+            ...DATOS_INCORRECTOS,
+            message: 'Falta parte de la identificación: complete los campos señalados.',
+          });
+          setIdentityOpen(true);
           return;
         }
 
@@ -387,7 +430,11 @@ export function useSurveyWizard() {
     if (!schema || !currentStep) return;
 
     if (currentStep.kind === 'welcome') {
-      if (!checkIdentity()) return;
+      if (!checkIdentity()) {
+        setIdentityOpen(true);
+        return;
+      }
+      setIdentityOpen(false);
       setStepIndex((index) => index + 1);
       return;
     }
@@ -474,18 +521,65 @@ export function useSurveyWizard() {
       remainingMinutes,
       identity,
       identityErrors,
+      identityOpen,
+      identityAlert,
     } satisfies WizardState,
     currentStep,
     currentComponent,
     currentEntries,
     evaluableAreas,
-    actions: { begin, resume, goBack, goNext, goToComponent, setAnswer, setIdentity, finish },
+    actions: {
+      begin,
+      resume,
+      goBack,
+      goNext,
+      goToComponent,
+      setAnswer,
+      setIdentity: updateIdentity,
+      openIdentity,
+      closeIdentity,
+      finish,
+    },
   };
 }
 
-/** El servidor rechazó el documento: no está en la nómina o ya respondió esta campaña. */
-function isDocumentoError(error: ApiError): boolean {
-  return (error.body as { field?: string } | undefined)?.field === 'numeroDocumento';
+/** Por qué rechazó el servidor el documento, si fue eso: no está en la nómina o ya respondió. */
+function reasonOf(error: unknown): string | undefined {
+  return error instanceof ApiError
+    ? (error.body as { reason?: string } | undefined)?.reason
+    : undefined;
+}
+
+/** El aviso de la ventana para un intento de empezar que el servidor rechazó. */
+function identityAlertFrom(error: unknown): IdentityAlert {
+  if (!(error instanceof ApiError)) {
+    return {
+      tone: 'error',
+      title: 'Sin conexión',
+      message: 'No pudimos comunicarnos con el servidor. Revise su conexión e intente de nuevo.',
+    };
+  }
+
+  switch (reasonOf(error)) {
+    case 'YA_PARTICIPO':
+      return { tone: 'info', title: 'Ya participó en la encuesta', message: error.message };
+    case 'NO_REGISTRADO':
+      return { tone: 'error', title: 'Persona no registrada', message: error.message };
+  }
+
+  switch (error.status) {
+    case 400:
+      return {
+        ...DATOS_INCORRECTOS,
+        message: 'El número de documento lleva solo números o letras, sin otros símbolos.',
+      };
+    case 409:
+      return { tone: 'error', title: 'La encuesta no está abierta', message: error.message };
+    case 429:
+      return { tone: 'error', title: 'Demasiados intentos', message: error.message };
+    default:
+      return { tone: 'error', title: 'No pudimos iniciar la encuesta', message: error.message };
+  }
 }
 
 /** Traduce un 422 del servidor a errores por campo. */

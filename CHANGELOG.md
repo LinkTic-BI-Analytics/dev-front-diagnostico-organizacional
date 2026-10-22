@@ -6,6 +6,39 @@ Lo que cambió en el sistema y por qué, del más reciente al más antiguo. El e
 
 ---
 
+## 22-oct-2026 (2): la identificación se pide en una ventana
+
+La bienvenida ya no muestra el formulario de identificación: queda con el propósito, los
+cuatro bloques y cómo se responde. **«Empezar la encuesta» abre una ventana**
+([`IdentityDialog`](src/components/survey/IdentityDialog.tsx)) que pide documento, cargo,
+proceso y subproceso. Si todo está bien, entra al componente 1; si no, la ventana dice qué
+pasó, con un título por caso:
+
+| Caso | Título |
+|---|---|
+| Faltan datos o están mal escritos | Datos incorrectos (y cada campo señalado) |
+| El documento no está en la nómina | Persona no registrada |
+| Ya envió la encuesta | Ya participó en la encuesta (en tono informativo, no de error) |
+| No hay campaña abierta | La encuesta no está abierta |
+| Muchos intentos seguidos | Demasiados intentos |
+| Sin red | Sin conexión |
+
+Para eso los rechazos del documento traen un `reason` (`NO_REGISTRADO`, `YA_PARTICIPO`) además
+del mensaje: la ventana titula con él y no depende del texto. Cambiar un dato quita el aviso
+del intento anterior.
+
+Es un `<dialog>` nativo, como el panel de detalle del admin: atrapa el foco, Escape la cierra
+(salvo mientras verifica) y el foco arranca en el documento. En el teléfono sale desde abajo.
+Con la encuesta ya empezada, la bienvenida muestra «Continuar» y «Revisar mis datos de
+identificación», y «Editar» en la revisión abre la ventana directamente.
+
+**Verificación:** tipos, lint, los 260 tests y el recorrido en el navegador, en PC y en móvil:
+«Datos incorrectos», «Persona no registrada» y «Ya participó», Escape, entrada al componente 1,
+volver con «Atrás» y revisar los datos con el documento bloqueado. «Persona no registrada» se probó contra
+el servidor real; los demás se simularon en el navegador para no escribir en la base.
+
+---
+
 ## 22-oct-2026: la nómina de colaboradores y una sola respuesta por persona
 
 La identificación pide ahora el **número de documento**, y cada colaborador responde la

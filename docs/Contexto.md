@@ -204,6 +204,10 @@ guiones y en mayúsculas. La encuesta **sigue siendo anónima**: el documento ac
 borrador solo hasta el envío, que marca `ya_respondio` —sin hora ni vínculo con la
 respuesta— y lo borra de `survey_responses`.
 
+Los datos de identificación se piden en una ventana que se abre al pulsar «Empezar», no en
+la bienvenida. Si la API rechaza el documento, la ventana lo dice con un título según el
+caso: «Persona no registrada», «Ya participó en la encuesta» o «Datos incorrectos».
+
 ---
 
 #### Componente 1 — Caracterización del relacionamiento

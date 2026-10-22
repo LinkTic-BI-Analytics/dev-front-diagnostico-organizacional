@@ -274,8 +274,11 @@ encabezados sin saber nada del organigrama
 lista plana obliga a leerla entera; la gestión es la pista con la que cada persona se ubica.
 
 **Dos excepciones al wizard genérico, ambas del componente 1.** La identificación (documento,
-cargo y área) vive en el paso de bienvenida y no en el catálogo de preguntas, porque condiciona todo
-lo que sigue. El área se elige en dos selectores —proceso y luego subproceso— para no
+cargo y área) no está en el catálogo de preguntas, porque condiciona todo lo que sigue: la pide
+una ventana ([`IdentityDialog`](../src/components/survey/IdentityDialog.tsx)) que se abre al
+pulsar «Empezar», y la bienvenida queda solo para lo que se lee. Los rechazos de la API
+(«Persona no registrada», «Ya participó») se muestran en esa ventana, titulados por el
+`reason` del error. El área se elige en dos selectores —proceso y luego subproceso— para no
 recorrer una lista de 53; el proceso es solo el camino y no se guarda. Y `c1_area_principal` —la relación principal— no se pinta como bloque propio:
 es una estrella sobre las áreas que se acaban de marcar en 1.1
 ([ComponentStep.tsx](../src/components/survey/ComponentStep.tsx)). Preguntarla aparte obligaría
