@@ -141,7 +141,7 @@ export function buildIdentitySchema(areaCodes: string[], roleValues: string[]) {
       ),
     ownArea: z
       .string()
-      .refine((code) => areaCodes.includes(code), 'Indique a qué área pertenece.'),
+      .refine((code) => areaCodes.includes(code), 'Seleccione su subproceso.'),
     respondentRole: z
       .string()
       .refine((role) => roleValues.includes(role), 'Indique su cargo.'),

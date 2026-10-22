@@ -183,7 +183,7 @@ Campos del encabezado del PDF: **Nombre**, **Cargo**, **Área**, **Fecha**.
 | Campo | Columna | Tipo | Obligatorio | Nota |
 |---|---|---|---|---|
 | Número de documento | `survey_responses.numero_documento` (solo mientras es borrador) | Texto, contra `colaboradores` | **Sí** | Añadido el 22-oct-2026. Debe estar en la nómina y no tener `ya_respondio`. Al enviar se marca `ya_respondio` y se borra de la respuesta |
-| Área | `own_area` | SINGLE (catálogo de áreas, agrupado por gestión) | **Sí** | Era la pregunta 1.1; se pide antes de empezar porque condiciona todo lo que sigue |
+| Área | `own_area` | Dos selectores: primero el proceso (gestión) y después el subproceso dentro de él | **Sí** | Era la pregunta 1.1; se pide antes de empezar porque condiciona todo lo que sigue. Se guarda solo el subproceso; si el proceso tiene uno solo, se marca solo (22-oct-2026) |
 | Cargo | `respondent_role` | SINGLE (lista cerrada) | **Sí** | `DIRECTOR`, `GERENTE`, `HEAD`, `COORDINADOR`, `LIDER`, `PROFESIONAL`, `ANALISTA` |
 | Nombre | — | — | — | **Se retira.** La columna `respondent_name` se elimina |
 | Fecha | — | — | — | La fija el servidor (`submitted_at`) |

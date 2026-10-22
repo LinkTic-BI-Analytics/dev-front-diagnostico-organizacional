@@ -26,6 +26,11 @@ encuesta **una sola vez**.
   quedaron. `ya_respondio` no guarda hora ni a qué respuesta corresponde.
 - `limpiar-datos-de-prueba.sql` quita también la marca `ya_respondio`: si no, quien probó la
   encuesta no podría responder la de verdad.
+- **El área se elige en dos pasos**: primero el proceso y después el subproceso de ese
+  proceso, en vez de un solo selector con los 53 subprocesos. Si el proceso tiene un solo
+  subproceso (Comercial, Mejoramiento continuo…), se marca solo. La revisión final muestra
+  los dos. De paso se corrigió que, en el teléfono, los campos y las instrucciones se
+  salieran de la tarjeta: la grilla tomaba el ancho de la opción más larga del selector.
 
 **Para desplegarlo:** aplicar la migración (`npm run prisma:deploy`) y **cargar la nómina antes
 de publicar el cambio**. Con la tabla vacía, nadie puede empezar la encuesta.

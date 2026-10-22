@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { LinkticLogo } from '@/components/brand/Logo';
 import { PhaseRoadmap } from './PhaseRoadmap';
 import type { Identity, SurveySchema } from '@/lib/survey-schema.types';
@@ -41,9 +41,9 @@ export function WelcomeStep({
   error,
 }: WelcomeStepProps) {
   /**
-   * Las áreas se ofrecen agrupadas por gestión. Con más de cincuenta subprocesos, una lista
-   * plana obliga a leerla entera para encontrar el propio; la gestión es la pista con la
-   * que cada persona se ubica primero.
+   * El área se elige en dos pasos: primero el proceso (la gestión) y después el subproceso
+   * dentro de él. Con más de cincuenta subprocesos, una sola lista obliga a recorrerla
+   * entera; el proceso es la pista con la que cada persona se ubica primero.
    */
   const areasPorGestion = useMemo(() => {
     const evaluables = schema.areas.filter((area) => area.isEvaluable);
@@ -54,6 +54,26 @@ export function WelcomeStep({
       }))
       .filter((grupo) => grupo.areas.length > 0);
   }, [schema.areas, schema.procesos]);
+
+  /**
+   * El proceso no se guarda: es solo el camino al subproceso, que es lo que se responde.
+   * Arranca en el del subproceso ya elegido, para un borrador retomado o al volver desde la
+   * revisión.
+   */
+  const [procesoCode, setProcesoCode] = useState(
+    () => schema.areas.find((area) => area.code === identity.ownArea)?.procesoCode ?? '',
+  );
+
+  const subprocesos =
+    areasPorGestion.find((grupo) => grupo.proceso.code === procesoCode)?.areas ?? [];
+
+  function elegirProceso(code: string) {
+    setProcesoCode(code);
+    const areas = areasPorGestion.find((grupo) => grupo.proceso.code === code)?.areas ?? [];
+    // Un proceso con un solo subproceso (Comercial, Mejoramiento continuo…) no deja nada
+    // que elegir: se marca solo, en vez de pedir un segundo clic obvio.
+    onIdentityChange({ ...identity, ownArea: areas.length === 1 ? areas[0].code : '' });
+  }
 
   return (
     <section className="flex flex-col gap-7" aria-labelledby="welcome-title">
@@ -87,8 +107,12 @@ export function WelcomeStep({
        * Instrucciones e identificación son dos cosas cortas y sin relación entre sí: una se
        * lee una vez y la otra se rellena. En PC van lado a lado para que «Empezar» entre en
        * la primera pantalla; apiladas, la bienvenida pide dos scrolls antes del botón.
+       *
+       * `grid-cols-1` y no la columna implícita: esa crece hasta la opción más larga de un
+       * selector («Sostenibilidad y reputación corporativa») y en el teléfono lo saca de la
+       * tarjeta. `grid-cols-1` la deja en el ancho disponible.
        */}
-      <div className="grid gap-7 lg:grid-cols-2 lg:items-start lg:gap-x-10">
+      <div className="grid grid-cols-1 gap-7 lg:grid-cols-2 lg:items-start lg:gap-x-10">
         <div className="flex flex-col gap-3">
           <h2 className="text-[15px] text-foreground">Cómo se responde</h2>
           <ul className="flex flex-col gap-2 rounded-xl border border-border-subtle bg-surface-sunken p-4">
@@ -106,62 +130,38 @@ export function WelcomeStep({
             <h2 className="text-[15px] text-foreground">Identificación</h2>
             <p className="text-xs text-foreground-muted">
               La encuesta es anónima. Su número de documento solo sirve para verificar que
-              cada colaborador responda una vez: no queda unido a sus respuestas. El área y el
-              cargo son necesarios para leer los resultados por proceso y por nivel.
+              cada colaborador responda una vez: no queda unido a sus respuestas. El cargo, el
+              proceso y el subproceso son necesarios para leer los resultados por área y por
+              nivel.
             </p>
           </div>
 
-          <label className="flex flex-col gap-1.5 text-sm">
-            <span className="text-foreground">Número de documento</span>
-            <input
-              type="text"
-              inputMode="text"
-              autoComplete="off"
-              spellCheck={false}
-              maxLength={40}
-              placeholder="Sin puntos ni espacios"
-              value={identity.numeroDocumento}
-              disabled={busy}
-              readOnly={documentLocked}
-              aria-invalid={identityErrors.numeroDocumento ? true : undefined}
-              onChange={(event) =>
-                onIdentityChange({ ...identity, numeroDocumento: event.target.value })
-              }
-              className={`${FIELD_CLASS} read-only:bg-surface-sunken read-only:text-foreground-muted`}
-            />
-            {identityErrors.numeroDocumento && (
-              <span role="alert" className="text-sm text-danger">
-                {identityErrors.numeroDocumento}
-              </span>
-            )}
-          </label>
-
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+          {/*
+           * Dos filas: quién es (documento y cargo) y dónde trabaja (proceso y luego
+           * subproceso). El subproceso queda junto al proceso del que depende.
+           */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-foreground">¿A qué área pertenece?</span>
-              <select
-                value={identity.ownArea}
+              <span className="text-foreground">Número de documento</span>
+              <input
+                type="text"
+                inputMode="text"
+                autoComplete="off"
+                spellCheck={false}
+                maxLength={40}
+                placeholder="Sin puntos ni espacios"
+                value={identity.numeroDocumento}
                 disabled={busy}
-                aria-invalid={identityErrors.ownArea ? true : undefined}
+                readOnly={documentLocked}
+                aria-invalid={identityErrors.numeroDocumento ? true : undefined}
                 onChange={(event) =>
-                  onIdentityChange({ ...identity, ownArea: event.target.value })
+                  onIdentityChange({ ...identity, numeroDocumento: event.target.value })
                 }
-                className={FIELD_CLASS}
-              >
-                <option value="">Seleccione su área…</option>
-                {areasPorGestion.map(({ proceso, areas }) => (
-                  <optgroup key={proceso.code} label={proceso.name}>
-                    {areas.map((area) => (
-                      <option key={area.code} value={area.code}>
-                        {area.name}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-              {identityErrors.ownArea && (
+                className={`${FIELD_CLASS} read-only:bg-surface-sunken read-only:text-foreground-muted`}
+              />
+              {identityErrors.numeroDocumento && (
                 <span role="alert" className="text-sm text-danger">
-                  {identityErrors.ownArea}
+                  {identityErrors.numeroDocumento}
                 </span>
               )}
             </label>
@@ -187,6 +187,56 @@ export function WelcomeStep({
               {identityErrors.respondentRole && (
                 <span role="alert" className="text-sm text-danger">
                   {identityErrors.respondentRole}
+                </span>
+              )}
+            </label>
+
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="text-foreground">Proceso</span>
+              <select
+                value={procesoCode}
+                disabled={busy}
+                aria-invalid={identityErrors.ownArea && !procesoCode ? true : undefined}
+                onChange={(event) => elegirProceso(event.target.value)}
+                className={FIELD_CLASS}
+              >
+                <option value="">Seleccione su proceso…</option>
+                {areasPorGestion.map(({ proceso }) => (
+                  <option key={proceso.code} value={proceso.code}>
+                    {proceso.name}
+                  </option>
+                ))}
+              </select>
+              {identityErrors.ownArea && !procesoCode && (
+                <span role="alert" className="text-sm text-danger">
+                  Seleccione su proceso.
+                </span>
+              )}
+            </label>
+
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="text-foreground">Subproceso</span>
+              <select
+                value={identity.ownArea}
+                disabled={busy || !procesoCode}
+                aria-invalid={identityErrors.ownArea && procesoCode ? true : undefined}
+                onChange={(event) =>
+                  onIdentityChange({ ...identity, ownArea: event.target.value })
+                }
+                className={`${FIELD_CLASS} disabled:bg-surface-sunken disabled:text-foreground-muted`}
+              >
+                <option value="">
+                  {procesoCode ? 'Seleccione su subproceso…' : 'Primero elija el proceso'}
+                </option>
+                {subprocesos.map((area) => (
+                  <option key={area.code} value={area.code}>
+                    {area.name}
+                  </option>
+                ))}
+              </select>
+              {identityErrors.ownArea && procesoCode && (
+                <span role="alert" className="text-sm text-danger">
+                  {identityErrors.ownArea}
                 </span>
               )}
             </label>

@@ -271,9 +271,10 @@ encabezados sin saber nada del organigrama
 ([option-groups.ts](../src/components/survey/fields/option-groups.ts)). Con 53 subprocesos una
 lista plana obliga a leerla entera; la gestión es la pista con la que cada persona se ubica.
 
-**Dos excepciones al wizard genérico, ambas del componente 1.** La identificación (área y
-cargo) vive en el paso de bienvenida y no en el catálogo de preguntas, porque condiciona todo
-lo que sigue. Y `c1_area_principal` —la relación principal— no se pinta como bloque propio:
+**Dos excepciones al wizard genérico, ambas del componente 1.** La identificación (documento,
+cargo y área) vive en el paso de bienvenida y no en el catálogo de preguntas, porque condiciona todo
+lo que sigue. El área se elige en dos selectores —proceso y luego subproceso— para no
+recorrer una lista de 53; el proceso es solo el camino y no se guarda. Y `c1_area_principal` —la relación principal— no se pinta como bloque propio:
 es una estrella sobre las áreas que se acaban de marcar en 1.1
 ([ComponentStep.tsx](../src/components/survey/ComponentStep.tsx)). Preguntarla aparte obligaría
 a releer 53 subprocesos para repetir una de las cinco ya elegidas.

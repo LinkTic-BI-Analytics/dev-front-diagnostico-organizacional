@@ -35,6 +35,7 @@ export function ReviewStep({
   // La identificación no es un componente del instrumento, pero sí condiciona todo lo
   // demás: se muestra primero para que el encuestado pueda corregirla antes de enviar.
   const ownArea = schema.areas.find((area) => area.code === identity.ownArea);
+  const proceso = schema.procesos.find((entry) => entry.code === ownArea?.procesoCode);
   const role = schema.roles.find((entry) => entry.value === identity.respondentRole);
 
   return (
@@ -57,9 +58,11 @@ export function ReviewStep({
         </header>
         <dl className="flex flex-col gap-3">
           <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-3">
-            <dt className="text-xs text-foreground-muted sm:w-1/2 sm:shrink-0">
-              ¿A qué área pertenece?
-            </dt>
+            <dt className="text-xs text-foreground-muted sm:w-1/2 sm:shrink-0">Proceso</dt>
+            <dd className="text-sm text-foreground">{proceso?.name ?? 'Sin responder'}</dd>
+          </div>
+          <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-3">
+            <dt className="text-xs text-foreground-muted sm:w-1/2 sm:shrink-0">Subproceso</dt>
             <dd className="text-sm text-foreground">{ownArea?.name ?? 'Sin responder'}</dd>
           </div>
           <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-3">

@@ -206,7 +206,7 @@ export async function submitResponse(draftToken: string) {
   ];
   if (identityMissing.length > 0) {
     throw new HttpError(422, {
-      message: 'Falta la identificación: indique su área y su cargo.',
+      message: 'Falta la identificación: indique su proceso, su subproceso y su cargo.',
       missing: identityMissing.map((questionCode) => ({
         questionCode,
         componentId: 0,

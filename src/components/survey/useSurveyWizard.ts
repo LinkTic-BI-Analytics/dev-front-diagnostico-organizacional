@@ -199,7 +199,7 @@ export function useSurveyWizard() {
     );
     setIdentityErrors(problems);
     if (Object.keys(problems).length > 0) {
-      setStepError('Indique su número de documento, su área y su cargo para continuar.');
+      setStepError('Complete los datos de identificación señalados para continuar.');
       return false;
     }
     setStepError(null);
@@ -352,13 +352,13 @@ export function useSurveyWizard() {
               identityMissing.map((item) => [
                 item.questionCode,
                 item.questionCode === 'ownArea'
-                  ? 'Indique a qué área pertenece.'
+                  ? 'Seleccione su subproceso.'
                   : 'Indique su cargo.',
               ]),
             ),
           );
           setStepIndex(0);
-          setStepError('Falta la identificación: indique su área y su cargo.');
+          setStepError('Falta la identificación: complete los datos señalados.');
           return;
         }
 
