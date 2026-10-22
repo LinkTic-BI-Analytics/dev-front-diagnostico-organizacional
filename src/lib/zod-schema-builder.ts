@@ -133,7 +133,7 @@ export function buildIdentitySchema(areaCodes: string[], roleValues: string[]) {
   return z.object({
     numeroDocumento: z
       .string()
-      .transform((value) => value.replace(/[\s.-]/g, '').toUpperCase())
+      .transform((value) => value.replace(/[\s.\-\p{Cf}]/gu, '').toUpperCase())
       .refine((value) => value.length > 0, 'Indique su número de documento.')
       .refine(
         (value) => value.length === 0 || /^[0-9A-Z]{4,20}$/.test(value),

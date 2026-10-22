@@ -3,11 +3,13 @@ import { z } from 'zod';
 /**
  * Forma canónica de un número de documento: sin espacios, puntos ni guiones y en
  * mayúsculas. «1.023.456.789» y «1023456789» son la misma cédula, y las letras de una cédula
- * de extranjería o un pasaporte no deben depender de cómo se escriban. La nómina se carga
- * en esta misma forma: es la llave con la que se compara.
+ * de extranjería o un pasaporte no deben depender de cómo se escriban. También se quitan los
+ * caracteres invisibles (`\p{Cf}`, como el U+2060 que trae un documento copiado de otro
+ * sistema): no se ven, pero harían que la misma cédula no coincida. La nómina se carga en
+ * esta misma forma (`prisma/cargar-colaboradores.ts`): es la llave con la que se compara.
  */
 export function normalizeNumeroDocumento(value: string): string {
-  return value.replace(/[\s.-]/g, '').toUpperCase();
+  return value.replace(/[\s.\-\p{Cf}]/gu, '').toUpperCase();
 }
 
 const NUMERO_DOCUMENTO = /^[0-9A-Z]{4,20}$/;

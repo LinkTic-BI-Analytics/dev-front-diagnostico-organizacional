@@ -102,6 +102,7 @@ jerárquica, dos encuestas a la carrera y una en línea recta para la vista de c
 | `npm run prisma:deploy` | `prisma migrate deploy` |
 | `npm run prisma:seed` | `prisma db seed` |
 | `npm run prisma:simulacion` | Siembra las 68 respuestas simuladas (ver arriba) |
+| `npm run prisma:colaboradores -- <archivo.csv> [--aplicar]` | Carga o actualiza la nómina desde el CSV del ERP. Sin `--aplicar` solo muestra qué haría. No borra a nadie ni toca `ya_respondio` |
 
 Si `tsc` se queja de `PageProps` o `LayoutProps` tras añadir una ruta, `npx next typegen`
 regenera los tipos de ruta. Este proyecto usa esos tipos generados: vea
@@ -152,6 +153,7 @@ prisma/
 ├── catalog.ts              el instrumento: organigrama, componentes, preguntas, pesos, bandas
 ├── seed.ts                 siembra el catálogo (idempotente)
 ├── simulacion.ts           las 68 respuestas simuladas, validadas con las reglas de la API
+├── nomina.ts               lectura del CSV de nómina del ERP (lo usa cargar-colaboradores.ts)
 ├── limpiar-datos-de-prueba.sql  borra todas las respuestas antes de abrir la recolección
 └── load-env.ts             carga .env.local como Next, para el CLI y los scripts
 prisma.config.ts            CLI de Prisma: schema, migraciones y la cadena de migración

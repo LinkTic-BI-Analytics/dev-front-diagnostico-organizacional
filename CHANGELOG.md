@@ -39,6 +39,15 @@ encuesta **una sola vez**.
 **Para desplegarlo:** aplicar la migración (`npm run prisma:deploy`) y **cargar la nómina antes
 de publicar el cambio**. Con la tabla vacía, nadie puede empezar la encuesta.
 
+**Hecho el 22-oct-2026 en la base real:** migración `0005_colaboradores` aplicada y nómina
+cargada desde el export del ERP (`erp_empleados_202610221514.csv`): **1.164 colaboradores**,
+sin inválidos ni duplicados. La carga es `npm run prisma:colaboradores -- <archivo.csv>
+--aplicar` ([`cargar-colaboradores.ts`](prisma/cargar-colaboradores.ts)): sin `--aplicar` solo
+muestra qué haría, y se puede repetir con una nómina nueva, porque actualiza a quien cambió, no
+borra a nadie y no toca `ya_respondio`. La `categoria` del ERP va a `subproceso`. El documento
+se normaliza igual que en la API, que ahora también quita caracteres invisibles: el export traía
+uno pegado a una cédula.
+
 **Verificación:** tipos, lint y los tests (cuatro nuevos para la normalización del documento),
 y el flujo contra una base local de `prisma dev` con las migraciones aplicadas: documento
 fuera de la nómina, documento normalizado, segundo borrador, envío, reintento, dos envíos

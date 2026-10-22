@@ -15,6 +15,11 @@ describe('startResponseSchema', () => {
     expect(parse(' 1023 456-789 ').data).toEqual({ numeroDocumento: '1023456789' });
   });
 
+  it('quita los caracteres invisibles de un documento copiado de otro sistema', () => {
+    expect(parse('\u20601000621040').data).toEqual({ numeroDocumento: '1000621040' });
+    expect(parse('1000621040\u200B').data).toEqual({ numeroDocumento: '1000621040' });
+  });
+
   it('pasa las letras a mayúsculas, para pasaportes y cédulas de extranjería', () => {
     expect(parse('ab123456').data).toEqual({ numeroDocumento: 'AB123456' });
   });

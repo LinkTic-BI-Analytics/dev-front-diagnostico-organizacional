@@ -18,7 +18,8 @@
     "prisma:validate": "prisma validate",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:seed": "prisma db seed",
-    "prisma:simulacion": "tsx prisma/seed-simulacion.ts"
+    "prisma:simulacion": "tsx prisma/seed-simulacion.ts",
+    "prisma:colaboradores": "tsx prisma/cargar-colaboradores.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "5.7.1",
